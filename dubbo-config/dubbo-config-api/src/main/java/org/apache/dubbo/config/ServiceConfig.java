@@ -362,6 +362,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         if (metadataReportConfig != null && metadataReportConfig.isValid()) {
             map.putIfAbsent(METADATA_KEY, REMOTE_METADATA_STORAGE_TYPE);
         }
+        // ljx 暴露方法
         if (CollectionUtils.isNotEmpty(getMethods())) {
             for (MethodConfig method : getMethods()) {
                 AbstractConfig.appendParameters(map, method, method.getName());
@@ -475,11 +476,13 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         // don't export when none is configured
         if (!SCOPE_NONE.equalsIgnoreCase(scope)) {
 
+            // ljx 本地调用
             // export to local if the config is not remote (export to remote only when config is remote)
             if (!SCOPE_REMOTE.equalsIgnoreCase(scope)) {
                 exportLocal(url);
             }
             // export to remote if the config is not local (export to local only when config is local)
+            // ljx 远程调用
             if (!SCOPE_LOCAL.equalsIgnoreCase(scope)) {
                 if (CollectionUtils.isNotEmpty(registryURLs)) {
                     for (URL registryURL : registryURLs) {
