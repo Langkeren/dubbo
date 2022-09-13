@@ -80,6 +80,7 @@ public class NettyServer extends AbstractServer implements RemotingServer {
     }
 
     /**
+     * 创建socket服务, 打开socket，接收并处理请求
      * Init and start netty server
      *
      * @throws Throwable
