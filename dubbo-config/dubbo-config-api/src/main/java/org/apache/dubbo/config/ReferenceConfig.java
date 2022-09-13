@@ -198,6 +198,10 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         this.services = services;
     }
 
+    /**
+     * ljx 加了两重锁？
+     * @return 代理实现类
+     */
     public synchronized T get() {
         if (destroyed) {
             throw new IllegalStateException("The invoker of ReferenceConfig(" + url + ") has already destroyed!");
@@ -326,6 +330,11 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         dispatch(new ReferenceConfigInitializedEvent(this, invoker));
     }
 
+    /**
+     * ljx 创建代理
+     * @param map 参数map
+     * @return 代理实现类
+     */
     @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
     private T createProxy(Map<String, String> map) {
         if (shouldJvmRefer(map)) {
