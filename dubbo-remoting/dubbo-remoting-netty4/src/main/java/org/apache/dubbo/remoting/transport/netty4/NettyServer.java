@@ -115,6 +115,7 @@ public class NettyServer extends AbstractServer implements RemotingServer {
     }
 
     protected NettyServerHandler createNettyServerHandler() {
+        // this链路较长, AbstractServer->AbstractEndpoint->AbstractPeer->ChannelHandler
         return new NettyServerHandler(getUrl(), this);
     }
 
