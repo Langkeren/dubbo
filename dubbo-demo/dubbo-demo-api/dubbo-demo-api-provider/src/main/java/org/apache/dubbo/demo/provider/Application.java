@@ -58,10 +58,13 @@ public class Application {
 
     /**
      * ljx 直接暴露单个服务
+     * @see <a href="https://dubbo.apache.org/zh/docs/v2.7/dev/implementation/#%E8%BF%9C%E7%A8%8B%E8%B0%83%E7%94%A8%E7%BB%86%E8%8A%82 ">细节</a>
      */
     private static void startWithExport() throws InterruptedException {
         ServiceConfig<DemoServiceImpl> service = new ServiceConfig<>();
+        // 服务接口
         service.setInterface(DemoService.class);
+        // 设置实现类
         service.setRef(new DemoServiceImpl());
         service.setApplication(new ApplicationConfig("dubbo-demo-api-provider"));
         service.setRegistry(new RegistryConfig("zookeeper://127.0.0.1:2181"));
