@@ -37,6 +37,7 @@ import static org.apache.dubbo.common.constants.CommonConstants.EXPORTER_LISTENE
 import static org.apache.dubbo.common.constants.CommonConstants.INVOKER_LISTENER_KEY;
 
 /**
+ * ljx 实际使用
  * ListenerProtocol
  */
 @Activate(order = 200)
