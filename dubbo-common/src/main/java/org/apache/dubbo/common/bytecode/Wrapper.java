@@ -120,6 +120,9 @@ public abstract class Wrapper {
         return WRAPPER_MAP.computeIfAbsent(c, Wrapper::makeWrapper);
     }
 
+    /**
+     * ljx 麻了，拼接字符串拼了一个接口的代理实现。invoker
+     */
     private static Wrapper makeWrapper(Class<?> c) {
         if (c.isPrimitive()) {
             throw new IllegalArgumentException("Can not create wrapper for primitive type: " + c);
@@ -130,6 +133,7 @@ public abstract class Wrapper {
 
         StringBuilder c1 = new StringBuilder("public void setPropertyValue(Object o, String n, Object v){ ");
         StringBuilder c2 = new StringBuilder("public Object getPropertyValue(Object o, String n){ ");
+        // ljx 凭借invokeMethod方法实现字符串
         StringBuilder c3 = new StringBuilder("public Object invokeMethod(Object o, String n, Class[] p, Object[] v) throws " + InvocationTargetException.class.getName() + "{ ");
 
         c1.append(name).append(" w; try{ w = ((").append(name).append(")$1); }catch(Throwable e){ throw new IllegalArgumentException(e); }");
@@ -173,6 +177,7 @@ public abstract class Wrapper {
                                  .toArray(new Method[] {});
         // get all public method.
         boolean hasMethod = hasMethods(methods);
+        // ljx 遍历接口方法，生成实际的调用方法stub. 注意这里使用了特殊标记（模板）
         if (hasMethod) {
             Map<String, Integer> sameNameMethodCount = new HashMap<>((int) (methods.length / 0.75f) + 1);
             for (Method m : methods) {
@@ -249,6 +254,7 @@ public abstract class Wrapper {
         c2.append(" throw new " + NoSuchPropertyException.class.getName() + "(\"Not found property \\\"\"+$2+\"\\\" field or getter method in class " + c.getName() + ".\"); }");
 
         // make class
+        // ljx 动态生成类
         long id = WRAPPER_CLASS_COUNTER.getAndIncrement();
         ClassGenerator cc = ClassGenerator.newInstance(cl);
         cc.setClassName((Modifier.isPublic(c.getModifiers()) ? Wrapper.class.getName() : c.getName() + "$sw") + id);
