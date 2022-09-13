@@ -89,7 +89,7 @@ import static org.apache.dubbo.rpc.protocol.dubbo.Constants.SHARE_CONNECTIONS_KE
 
 
 /**
- * ljx 直连引用服务
+ * ljx 服务协议，dubbo实现
  * dubbo protocol support.
  */
 public class DubboProtocol extends AbstractProtocol {
@@ -331,6 +331,11 @@ public class DubboProtocol extends AbstractProtocol {
         }
     }
 
+    /**
+     * 创建服务
+     * @param url 服务url
+     * @return 带协议的服务
+     */
     private ProtocolServer createServer(URL url) {
         url = URLBuilder.from(url)
                 // send readonly event when server closes, it's enabled by default
@@ -347,6 +352,7 @@ public class DubboProtocol extends AbstractProtocol {
 
         ExchangeServer server;
         try {
+            // 绑定url地址和端口，返回一个exchanger服务，默认是netty客户端?
             server = Exchangers.bind(url, requestHandler);
         } catch (RemotingException e) {
             throw new RpcException("Fail to start server(url: " + url + ") " + e.getMessage(), e);

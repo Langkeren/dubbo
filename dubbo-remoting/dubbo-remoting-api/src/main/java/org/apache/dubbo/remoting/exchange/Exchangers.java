@@ -110,6 +110,7 @@ public class Exchangers {
     }
 
     public static Exchanger getExchanger(URL url) {
+        // 目前好像只有HeaderExchanger这个实现
         String type = url.getParameter(Constants.EXCHANGER_KEY, Constants.DEFAULT_EXCHANGER);
         return getExchanger(type);
     }
