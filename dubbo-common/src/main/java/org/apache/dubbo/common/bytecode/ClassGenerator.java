@@ -45,6 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
+ * 使用javassist生成类
  * ClassGenerator
  */
 public final class ClassGenerator {
