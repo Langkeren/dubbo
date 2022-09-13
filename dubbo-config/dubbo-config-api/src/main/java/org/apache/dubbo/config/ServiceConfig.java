@@ -203,6 +203,9 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         dispatch(new ServiceConfigUnexportedEvent(this));
     }
 
+    /**
+     * 暴露服务，一个服务对应一个接口，所以这里暴露的是类的方法
+     */
     @Override
     public synchronized void export() {
         if (bootstrap == null) {

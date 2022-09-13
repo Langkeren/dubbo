@@ -37,6 +37,9 @@ public class Application {
         return args.length > 0 && "classic".equalsIgnoreCase(args[0]);
     }
 
+    /**
+     * ljx暴露所有服务，实则是循环调用下面的export方法
+     */
     private static void startWithBootstrap() {
         ServiceConfig<DemoServiceImpl> service = new ServiceConfig<>();
         service.setInterface(DemoService.class);
@@ -50,6 +53,9 @@ public class Application {
                 .await();
     }
 
+    /**
+     * ljx 直接暴露单个服务
+     */
     private static void startWithExport() throws InterruptedException {
         ServiceConfig<DemoServiceImpl> service = new ServiceConfig<>();
         service.setInterface(DemoService.class);
