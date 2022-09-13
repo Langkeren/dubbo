@@ -34,6 +34,7 @@ import static org.apache.dubbo.common.constants.CommonConstants.REFERENCE_FILTER
 import static org.apache.dubbo.common.constants.CommonConstants.SERVICE_FILTER_KEY;
 
 /**
+ * ljx 拦截服务
  * ListenerProtocol
  */
 @Activate(order = 100)

@@ -121,6 +121,7 @@ import static org.apache.dubbo.rpc.cluster.Constants.WARMUP_KEY;
 import static org.apache.dubbo.rpc.cluster.Constants.WEIGHT_KEY;
 
 /**
+ * ljx 注册中心服务
  * TODO, replace RegistryProtocol completely in the future.
  */
 public class RegistryProtocol implements Protocol {

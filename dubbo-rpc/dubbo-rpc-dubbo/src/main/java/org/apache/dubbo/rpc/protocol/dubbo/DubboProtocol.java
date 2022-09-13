@@ -89,6 +89,7 @@ import static org.apache.dubbo.rpc.protocol.dubbo.Constants.SHARE_CONNECTIONS_KE
 
 
 /**
+ * ljx 直连引用服务
  * dubbo protocol support.
  */
 public class DubboProtocol extends AbstractProtocol {
