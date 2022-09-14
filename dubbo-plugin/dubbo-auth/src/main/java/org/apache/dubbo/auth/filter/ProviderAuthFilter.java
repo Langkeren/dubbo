@@ -29,6 +29,9 @@ import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.Result;
 import org.apache.dubbo.rpc.RpcException;
 
+/**
+ * 调用拦截扩展
+ */
 @Activate(group = CommonConstants.PROVIDER, order = -10000)
 public class ProviderAuthFilter implements Filter {
 
