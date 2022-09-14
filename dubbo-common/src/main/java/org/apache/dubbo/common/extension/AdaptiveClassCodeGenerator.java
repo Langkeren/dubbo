@@ -30,6 +30,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
+ * 接口自适应实现类, 生成类名为 接口类名+s$Adaptive后缀 的实现类
+ * 实际上将原实现赋值extension属性，并调用extension方法
+ * 
  * Code generator for Adaptive class
  */
 public class AdaptiveClassCodeGenerator {
@@ -84,6 +87,7 @@ public class AdaptiveClassCodeGenerator {
     }
 
     /**
+     * 类实现，拼字符串
      * generate and return class code
      */
     public String generate() {
