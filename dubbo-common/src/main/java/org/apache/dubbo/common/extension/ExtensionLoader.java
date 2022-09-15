@@ -1136,6 +1136,11 @@ public class ExtensionLoader<T> {
         return name.toLowerCase();
     }
 
+    /**
+     * 1. 调用 getAdaptiveExtensionClass 方法获取自适应拓展 Class 对象
+     * 2. 通过反射进行实例化
+     * 3. 调用 injectExtension 方法向拓展实例中注入依赖
+     */
     @SuppressWarnings("unchecked")
     private T createAdaptiveExtension() {
         try {
@@ -1147,11 +1152,13 @@ public class ExtensionLoader<T> {
     }
 
     private Class<?> getAdaptiveExtensionClass() {
-        // 确保已经加载接口所有的实现类
+        // 通过 SPI 获取所有的拓展类
         getExtensionClasses();
+        // 检查缓存，若缓存不为空，则直接返回缓存
         if (cachedAdaptiveClass != null) {
             return cachedAdaptiveClass;
         }
+        // 创建自适应拓展类
         return cachedAdaptiveClass = createAdaptiveExtensionClass();
     }
 
