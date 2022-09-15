@@ -222,19 +222,32 @@ public class ConditionRouter extends AbstractRouter {
             return invokers;
         }
         try {
+            // 先对服务消费者条件进行匹配，如果匹配失败，表明服务消费者 url 不符合匹配规则，
+            // 无需进行后续匹配，直接返回 Invoker 列表即可。比如下面的规则：
+            //     host = 10.20.153.10 => host = 10.0.0.10
+            // 这条路由规则希望 IP 为 10.20.153.10 的服务消费者调用 IP 为 10.0.0.10 机器上的服务。
+            // 当消费者 ip 为 10.20.153.11 时，matchWhen 返回 false，表明当前这条路由规则不适用于
+            // 当前的服务消费者，此时无需再进行后续匹配，直接返回即可。
             if (!matchWhen(url, invocation)) {
                 return invokers;
             }
             List<Invoker<T>> result = new ArrayList<Invoker<T>>();
+            // 服务提供者匹配条件未配置，表明对指定的服务消费者禁用服务，也就是服务消费者在黑名单中
             if (thenCondition == null) {
                 logger.warn("The current consumer in the service blacklist. consumer: " + NetUtils.getLocalHost() + ", service: " + url.getServiceKey());
                 return result;
             }
+            // 这里可以简单的把 Invoker 理解为服务提供者，现在使用服务提供者匹配规则对
+            // Invoker 列表进行匹配
             for (Invoker<T> invoker : invokers) {
                 if (matchThen(invoker.getUrl(), url)) {
+                    // 若匹配成功，表明当前 Invoker 符合服务提供者匹配规则。
+                    // 此时将 Invoker 添加到 result 列表中
                     result.add(invoker);
                 }
             }
+            // 返回匹配结果，如果 result 为空列表，且 force = true，表示强制返回空列表，
+            // 否则路由结果为空的路由规则将自动失效
             if (!result.isEmpty()) {
                 return result;
             } else if (force) {
@@ -244,6 +257,7 @@ public class ConditionRouter extends AbstractRouter {
         } catch (Throwable t) {
             logger.error("Failed to execute condition router rule: " + getUrl() + ", invokers: " + invokers + ", cause: " + t.getMessage(), t);
         }
+        // 原样返回，此时 force = false，表示该条路由规则失效
         return invokers;
     }
 
@@ -260,19 +274,30 @@ public class ConditionRouter extends AbstractRouter {
     }
 
     boolean matchWhen(URL url, Invocation invocation) {
-        return CollectionUtils.isEmptyMap(whenCondition) || matchCondition(whenCondition, url, null, invocation);
+        // 服务消费者条件为 null 或空，均返回 true，比如：
+        //     => host != 172.22.3.91
+        // 表示所有的服务消费者都不得调用 IP 为 172.22.3.91 的机器上的服务
+        return CollectionUtils.isEmptyMap(whenCondition)
+                // 进行条件匹配
+                || matchCondition(whenCondition, url, null, invocation);
     }
 
     private boolean matchThen(URL url, URL param) {
-        return CollectionUtils.isNotEmptyMap(thenCondition) && matchCondition(thenCondition, url, param, null);
+        // 服务提供者条件为 null 或空，表示禁用服务
+        return CollectionUtils.isNotEmptyMap(thenCondition)
+                // 进行条件匹配
+                && matchCondition(thenCondition, url, param, null);
     }
 
     private boolean matchCondition(Map<String, MatchPair> condition, URL url, URL param, Invocation invocation) {
+        // 将服务提供者或消费者 url 转成 Map
         Map<String, String> sample = url.toMap();
         boolean result = false;
+        // 遍历 condition 列表
         for (Map.Entry<String, MatchPair> matchPair : condition.entrySet()) {
+            // 获取匹配项名称，比如 host、method 等
             String key = matchPair.getKey();
-
+            // 参数匹配
             if (key.startsWith(Constants.ARGUMENTS)) {
                 if (!matchArguments(matchPair, invocation)) {
                     return false;
@@ -284,15 +309,21 @@ public class ConditionRouter extends AbstractRouter {
 
             String sampleValue;
             //get real invoked method name from invocation
+            // 如果 invocation 不为空，且 key 为 method(s)，表示进行方法匹配
             if (invocation != null && (METHOD_KEY.equals(key) || METHODS_KEY.equals(key))) {
+                // 从 invocation 获取被调用方法的名称
                 sampleValue = invocation.getMethodName();
             } else if (ADDRESS_KEY.equals(key)) {
+                // 地址匹配
                 sampleValue = url.getAddress();
             } else if (HOST_KEY.equals(key)) {
+                // 主机匹配
                 sampleValue = url.getHost();
             } else {
+                // 从服务提供者或消费者 url 中获取指定字段值，比如 host、application 等
                 sampleValue = sample.get(key);
                 if (sampleValue == null) {
+                    // 尝试通过 default.xxx 获取相应的值
                     sampleValue = sample.get(key);
                 }
             }
