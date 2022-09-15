@@ -721,7 +721,9 @@ public class ExtensionLoader<T> {
         }
 
         try {
+            // 遍历目标类的所有方法
             for (Method method : instance.getClass().getMethods()) {
+                // 检测方法是否以 set 开头，且方法仅有一个参数，且方法访问级别为 public
                 if (!isSetter(method)) {
                     continue;
                 }
@@ -733,6 +735,7 @@ public class ExtensionLoader<T> {
                     continue;
                 }
 
+                // 获取 setter 方法参数类型
                 Class<?> pt = method.getParameterTypes()[0];
                 if (ReflectUtils.isPrimitives(pt)) {
                     continue;
@@ -743,8 +746,10 @@ public class ExtensionLoader<T> {
                  * {@link Inject#enable} == false will skip inject property phase
                  * {@link Inject#InjectType#ByName} default inject by name
                  */
+                // 获取属性名，比如 setName 方法对应属性名 name
                 String property = getSetterProperty(method);
                 Inject inject = method.getAnnotation(Inject.class);
+
                 if (inject == null) {
                     injectValue(instance, method, pt, property);
                 } else {
@@ -767,8 +772,10 @@ public class ExtensionLoader<T> {
 
     private void injectValue(T instance, Method method, Class<?> pt, String property) {
         try {
+            // 从 ObjectFactory 中获取依赖对象
             Object object = objectFactory.getExtension(pt, property);
             if (object != null) {
+                // 通过反射调用 setter 方法设置依赖
                 method.invoke(instance, object);
             }
         } catch (Exception e) {
