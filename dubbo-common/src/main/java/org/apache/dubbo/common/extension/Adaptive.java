@@ -25,6 +25,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Adaptive 可注解在类或方法上。
+ * 当 Adaptive 注解在类上时，Dubbo 不会为该类生成代理类。注解在方法（接口方法）上时，Dubbo 则会为该方法生成代理逻辑
+ * Adaptive 注解在类上的情况很少，在 Dubbo 中，仅有两个类被 Adaptive 注解了，分别是 AdaptiveCompiler 和 AdaptiveExtensionFactory。
+ * 此种情况，表示拓展的加载逻辑由人工编码完成。更多时候，Adaptive 是注解在接口方法上的，表示拓展的加载逻辑需由框架自动生成。Adaptive 注解的地方不同，相应的处理逻辑也是不同的。
+ * 注解在类上时，处理逻辑比较简单，本文就不分析了。注解在接口方法上时，处理逻辑较为复杂
+ *
  * Provide helpful information for {@link ExtensionLoader} to inject dependency extension instance.
  *
  * @see ExtensionLoader
@@ -35,6 +41,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface Adaptive {
     /**
+     * 要注入的实现类名
      * Decide which target extension to be injected. The name of the target extension is decided by the parameter passed
      * in the URL, and the parameter names are given by this method.
      * <p>
