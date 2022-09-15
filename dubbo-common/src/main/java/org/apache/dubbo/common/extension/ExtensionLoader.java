@@ -851,6 +851,7 @@ public class ExtensionLoader<T> {
     }
 
     /**
+     * 获取 SPI 注解，这里的 type 变量是在调用 getExtensionLoader 方法时传入的
      * extract and cache default extension name if exists
      */
     private void cacheDefaultExtensionName() {
@@ -861,11 +862,14 @@ public class ExtensionLoader<T> {
 
         String value = defaultAnnotation.value();
         if ((value = value.trim()).length() > 0) {
+            // 对 SPI 注解内容进行切分
             String[] names = NAME_SEPARATOR.split(value);
             if (names.length > 1) {
+                // 检测 SPI 注解内容是否合法，不合法则抛出异常
                 throw new IllegalStateException("More than 1 default extension name on extension " + type.getName()
                         + ": " + Arrays.toString(names));
             }
+            // 设置默认名称，参考 getDefaultExtension 方法
             if (names.length == 1) {
                 cachedDefaultName = names[0];
             }
@@ -876,6 +880,9 @@ public class ExtensionLoader<T> {
         loadDirectory(extensionClasses, dir, type, false, false);
     }
 
+    /**
+     * 加载指定文件夹下的配置文件
+     */
     private void loadDirectory(Map<String, Class<?>> extensionClasses, String dir, String type,
                                boolean extensionLoaderClassLoaderFirst, boolean overridden, String... excludedPackages) {
         String fileName = dir + type;
