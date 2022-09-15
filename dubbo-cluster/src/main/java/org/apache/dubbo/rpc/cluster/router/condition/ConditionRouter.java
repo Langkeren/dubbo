@@ -39,10 +39,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.apache.dubbo.common.constants.CommonConstants.ENABLED_KEY;
-import static org.apache.dubbo.common.constants.CommonConstants.HOST_KEY;
-import static org.apache.dubbo.common.constants.CommonConstants.METHODS_KEY;
-import static org.apache.dubbo.common.constants.CommonConstants.METHOD_KEY;
+import static org.apache.dubbo.common.constants.CommonConstants.*;
 import static org.apache.dubbo.rpc.cluster.Constants.ADDRESS_KEY;
 import static org.apache.dubbo.rpc.cluster.Constants.FORCE_KEY;
 import static org.apache.dubbo.rpc.cluster.Constants.PRIORITY_KEY;
@@ -323,7 +320,8 @@ public class ConditionRouter extends AbstractRouter {
                 // 从服务提供者或消费者 url 中获取指定字段值，比如 host、application 等
                 sampleValue = sample.get(key);
                 if (sampleValue == null) {
-                    // 尝试通过 default.xxx 获取相应的值
+                    // 这里应该是合并覆盖了 尝试通过 default.xxx 获取相应的值
+                    // 有效代码: sampleValue = sample.get(DEFAULT_KEY_PREFIX + key);
                     sampleValue = sample.get(key);
                 }
             }
