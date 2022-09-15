@@ -388,7 +388,7 @@ public class ConditionRouter extends AbstractRouter {
         } catch (Exception e) {
             logger.warn("Arguments match failed, matchPair[]" + matchPair + "] invocation[" + invocation + "]", e);
         }
-
+        // 情况四：matches 和 mismatches 均为空，此时返回 false
         return false;
     }
 
@@ -396,18 +396,26 @@ public class ConditionRouter extends AbstractRouter {
         final Set<String> matches = new HashSet<String>();
         final Set<String> mismatches = new HashSet<String>();
 
+        // 条件匹配
         private boolean isMatch(String value, URL param) {
+            // 情况一：matches 非空，mismatches 为空
             if (!matches.isEmpty() && mismatches.isEmpty()) {
+                // 遍历 matches 集合，检测入参 value 是否能被 matches 集合元素匹配到。
+                // 举个例子，如果 value = 10.20.153.11，matches = [10.20.153.*],
+                // 此时 isMatchGlobPattern 方法返回 true
                 for (String match : matches) {
                     if (UrlUtils.isMatchGlobPattern(match, value, param)) {
                         return true;
                     }
                 }
+                // 如果所有匹配项都无法匹配到入参，则返回 false
                 return false;
             }
 
+            // 情况二：matches 为空，mismatches 非空
             if (!mismatches.isEmpty() && matches.isEmpty()) {
                 for (String mismatch : mismatches) {
+                    // 只要入参被 mismatches 集合中的任意一个元素匹配到，就返回 false
                     if (UrlUtils.isMatchGlobPattern(mismatch, value, param)) {
                         return false;
                     }
@@ -415,20 +423,26 @@ public class ConditionRouter extends AbstractRouter {
                 return true;
             }
 
+            // 情况三：matches 非空，mismatches 非空
             if (!matches.isEmpty() && !mismatches.isEmpty()) {
                 //when both mismatches and matches contain the same value, then using mismatches first
+                // matches 和 mismatches 均为非空，此时优先使用 mismatches 集合元素对入参进行匹配。
+                // 只要 mismatches 集合中任意一个元素与入参匹配成功，就立即返回 false，结束方法逻辑
                 for (String mismatch : mismatches) {
                     if (UrlUtils.isMatchGlobPattern(mismatch, value, param)) {
                         return false;
                     }
                 }
+                // mismatches 集合元素无法匹配到入参，此时再使用 matches 继续匹配
                 for (String match : matches) {
+                    // 只要 matches 集合中任意一个元素与入参匹配成功，就立即返回 true
                     if (UrlUtils.isMatchGlobPattern(match, value, param)) {
                         return true;
                     }
                 }
                 return false;
             }
+            // 全部失配，则返回 false
             return false;
         }
     }
