@@ -325,14 +325,24 @@ public class ConditionRouter extends AbstractRouter {
                     sampleValue = sample.get(key);
                 }
             }
+
+            // --------------------✨ 分割线 ✨-------------------- //
+
             if (sampleValue != null) {
+                // 调用 MatchPair 的 isMatch 方法进行匹配
                 if (!matchPair.getValue().isMatch(sampleValue, param)) {
+                    // 只要有一个规则匹配失败，立即返回 false 结束方法逻辑
                     return false;
                 } else {
                     result = true;
                 }
             } else {
                 //not pass the condition
+                // sampleValue 为空，表明服务提供者或消费者 url 中不包含相关字段。此时如果
+                // MatchPair 的 matches 不为空，表示匹配失败，返回 false。比如我们有这样
+                // 一条匹配条件 loadbalance = random，假设 url 中并不包含 loadbalance 参数，
+                // 此时 sampleValue = null。既然路由规则里限制了 loadbalance 必须为 random，
+                // 但 sampleValue = null，明显不符合规则，因此返回 false
                 if (!matchPair.getValue().matches.isEmpty()) {
                     return false;
                 } else {
