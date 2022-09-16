@@ -92,17 +92,23 @@ public class AdaptiveClassCodeGenerator {
      */
     public String generate() {
         // no need to generate adaptive class since there's no adaptive method found.
+        // 若所有的方法上均无 Adaptive 注解，则抛出异常
         if (!hasAdaptiveMethod()) {
             throw new IllegalStateException("No adaptive method exist on extension " + type.getName() + ", refuse to create the adaptive class!");
         }
 
         StringBuilder code = new StringBuilder();
+        // 生成 package 代码：package + type 所在包
         code.append(generatePackageInfo());
+        // 生成 import 代码：import + ExtensionLoader 全限定名
         code.append(generateImports());
+        // 生成类代码：public class + type简单名称 + $Adaptive + implements + type全限定名 + {
         code.append(generateClassDeclaration());
 
+        // 通过反射获取所有的方法
         Method[] methods = type.getMethods();
         for (Method method : methods) {
+            // ${生成方法}
             code.append(generateMethod(method));
         }
         code.append("}");
@@ -161,9 +167,13 @@ public class AdaptiveClassCodeGenerator {
      */
     private String generateMethod(Method method) {
         String methodReturnType = method.getReturnType().getCanonicalName();
+        // 名称
         String methodName = method.getName();
+        // 主体
         String methodContent = generateMethodContent(method);
+        // 参数部分
         String methodArgs = generateMethodArguments(method);
+        // 异常抛出部分
         String methodThrows = generateMethodThrows(method);
         return String.format(CODE_METHOD_DECLARATION, methodReturnType, methodName, methodArgs, methodThrows, methodContent);
     }
@@ -199,12 +209,17 @@ public class AdaptiveClassCodeGenerator {
     }
 
     /**
+     * 方法内容
      * generate method content
      */
     private String generateMethodContent(Method method) {
         Adaptive adaptiveAnnotation = method.getAnnotation(Adaptive.class);
         StringBuilder code = new StringBuilder(512);
+        // 如果方法上无 Adaptive 注解，则生成 throw new UnsupportedOperationException(...) 代码
         if (adaptiveAnnotation == null) {
+            // 生成的代码格式如下：
+            // throw new UnsupportedOperationException(
+            //     "method " + 方法签名 + of interface + 全限定接口名 + is not adaptive method!”)
             return generateUnsupported(method);
         } else {
             int urlTypeIndex = getUrlTypeIndex(method);

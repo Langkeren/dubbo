@@ -1163,10 +1163,13 @@ public class ExtensionLoader<T> {
     }
 
     private Class<?> createAdaptiveExtensionClass() {
+        // 构建自适应拓展代码
         String code = new AdaptiveClassCodeGenerator(type, cachedDefaultName).generate();
         ClassLoader classLoader = findClassLoader();
+        // 获取编译器实现类
         org.apache.dubbo.common.compiler.Compiler compiler =
                 ExtensionLoader.getExtensionLoader(org.apache.dubbo.common.compiler.Compiler.class).getAdaptiveExtension();
+        // 编译代码，生成 Class
         return compiler.compile(code, classLoader);
     }
 
