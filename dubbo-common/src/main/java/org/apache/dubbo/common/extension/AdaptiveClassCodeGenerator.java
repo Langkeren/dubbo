@@ -239,6 +239,7 @@ public class AdaptiveClassCodeGenerator {
                 code.append(generateUrlAssignmentIndirectly(method));
             }
 
+            //  获取 Adaptive 注解值
             String[] value = getMethodAdaptiveValue(adaptiveAnnotation);
 
             boolean hasInvocation = hasInvocationArgument(method);
@@ -252,6 +253,7 @@ public class AdaptiveClassCodeGenerator {
             code.append(generateExtensionAssignment());
 
             // return statement
+            // 检测 Invocation 参数
             code.append(generateReturnAndInvocation(method));
         }
 
