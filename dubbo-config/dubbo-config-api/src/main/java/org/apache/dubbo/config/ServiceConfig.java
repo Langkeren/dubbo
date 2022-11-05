@@ -217,6 +217,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             bootstrap.initialize();
         }
 
+        // 与文档有所不同, 配置的检查提前了，没有放在doExport方法
         checkAndUpdateSubConfigs();
 
         initServiceMetadata(provider);
@@ -228,6 +229,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             return;
         }
 
+        // delay > 0，延时导出服务
         if (shouldDelay()) {
             DELAY_EXPORT_EXECUTOR.schedule(() -> {
                 try {
@@ -258,9 +260,13 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         dispatch(new ServiceConfigExportedEvent(this));
     }
 
+    /**
+     * 检查并更新配置
+     */
     private void checkAndUpdateSubConfigs() {
         // Use default configs defined explicitly with global scope
         completeCompoundConfigs();
+        // 检测 provider 是否为空，为空则新建一个，并通过系统变量为其初始化
         checkDefault();
         checkProtocol();
         // init some null configuration.
@@ -270,6 +276,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
 
         // if protocol is not injvm checkRegistry
         if (!isOnlyInJvm()) {
+            // 检查注册中心
             checkRegistry();
         }
         this.refresh();
@@ -278,24 +285,34 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             throw new IllegalStateException("<dubbo:service interface=\"\" /> interface not allow null!");
         }
 
+        // 检测 ref 是否为泛化服务类型
         if (ref instanceof GenericService) {
+            // 设置 interfaceClass 为 GenericService.class
             interfaceClass = GenericService.class;
             if (StringUtils.isEmpty(generic)) {
+                // 设置 generic = "true"
                 generic = TRUE_VALUE;
             }
         } else {
+            // ref 非 GenericService 类型
             try {
+                // 加载具体的类型
                 interfaceClass = Class.forName(interfaceName, true, Thread.currentThread()
                         .getContextClassLoader());
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e.getMessage(), e);
             }
+            // 对 interfaceClass，以及 <dubbo:method> 标签中的必要字段进行检查
             checkInterfaceAndMethods(interfaceClass, getMethods());
+            // 对 ref 合法性进行检测
             checkRef();
+            // 设置 generic = "false"
             generic = FALSE_VALUE;
         }
 
+        // local 和 stub 在功能应该是一致的，用于配置本地存根
         checkStubAndLocal(interfaceClass);
+        // 检测各种对象是否为空，为空则新建，或者抛出异常
         ConfigValidationUtils.checkMock(interfaceClass, this);
         ConfigValidationUtils.validateServiceConfig(this);
         postProcessConfig();
@@ -314,6 +331,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         if (StringUtils.isEmpty(path)) {
             path = interfaceName;
         }
+        // 导出服务
         doExportUrls();
         bootstrap.setReady(true);
     }

@@ -353,6 +353,10 @@ public class ConfigValidationUtils {
         }
     }
 
+    /**
+     * RegistryConfig 等配置类进行检测，为空则尝试创建，若无法创建则抛出异常
+     * @param config 配置
+     */
     public static void validateServiceConfig(ServiceConfig config) {
         checkKey(VERSION_KEY, config.getVersion());
         checkKey(GROUP_KEY, config.getGroup());
