@@ -336,6 +336,10 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         bootstrap.setReady(true);
     }
 
+    /**
+     * Dubbo 允许我们使用不同的协议导出服务，也允许我们向多个注册中心注册服务。
+     * Dubbo 在 doExportUrls 方法中对多协议，多注册中心进行了支持。相关代码如下
+     */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void doExportUrls() {
         ServiceRepository repository = ApplicationModel.getServiceRepository();
@@ -348,9 +352,11 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                 serviceMetadata
         );
 
+        // 加载注册中心链接
         List<URL> registryURLs = ConfigValidationUtils.loadRegistries(this, true);
 
         int protocolConfigNum = protocols.size();
+        // 遍历 protocols，并在每个协议下导出服务
         for (ProtocolConfig protocolConfig : protocols) {
             String pathKey = URL.buildKey(getContextPath(protocolConfig)
                     .map(p -> p + "/" + path)
