@@ -541,16 +541,19 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
 
         String scope = url.getParameter(SCOPE_KEY);
         // don't export when none is configured
+        // 如果 scope = none，则什么都不做
         if (!SCOPE_NONE.equalsIgnoreCase(scope)) {
 
             // ljx 本地调用
             // export to local if the config is not remote (export to remote only when config is remote)
+            // scope != remote，导出到本地
             if (!SCOPE_REMOTE.equalsIgnoreCase(scope)) {
                 exportLocal(url);
             }
             // export to remote if the config is not local (export to local only when config is local)
             // ljx 远程调用
             // 判断协议名是否为 injvm
+            // scope != local，导出到远程
             if (!SCOPE_LOCAL.equalsIgnoreCase(scope)) {
                 if (CollectionUtils.isNotEmpty(registryURLs)) {
                     for (URL registryURL : registryURLs) {
@@ -562,9 +565,12 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                         if (LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {
                             continue;
                         }
+
+                        // 加载监视器链接
                         url = url.addParameterIfAbsent(DYNAMIC_KEY, registryURL.getParameter(DYNAMIC_KEY));
                         URL monitorUrl = ConfigValidationUtils.loadMonitor(this, registryURL);
                         if (monitorUrl != null) {
+                            // 将监视器链接作为参数添加到 url 中
                             url = url.addParameterAndEncoded(MONITOR_KEY, monitorUrl.toFullString());
                         }
                         if (logger.isInfoEnabled()) {
@@ -583,13 +589,18 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                         }
 
                         // 通过 ProxyFactory 类的 getInvoker 方法使用 ref 生成一个 AbstractProxyInvoker 实例，到这一步就完成具体服务到 Invoker 的转化
+                        // 为服务提供类(ref)生成 Invoker
                         Invoker<?> invoker = PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass,
                                 registryURL.addParameterAndEncoded(EXPORT_KEY, url.toFullString()));
+                        // DelegateProviderMetaDataInvoker 用于持有 Invoker 和 ServiceConfig
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
+                        // 导出服务，并生成 Exporter
                         Exporter<?> exporter = PROTOCOL.export(wrapperInvoker);
                         exporters.add(exporter);
                     }
+
+                    // 不存在注册中心，仅导出服务
                 } else {
                     if (logger.isInfoEnabled()) {
                         logger.info("Export dubbo service " + interfaceClass.getName() + " to url " + url);
