@@ -372,14 +372,20 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
      */
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs, int protocolConfigNum) {
         String name = protocolConfig.getName();
+
+        // 如果协议名为空，或空串，则将协议名变量设置为 dubbo
         if (StringUtils.isEmpty(name)) {
             name = DUBBO;
         }
 
         Map<String, String> map = new HashMap<String, String>();
+
+        // 添加 side、版本、时间戳以及进程号等信息到 map 中
         map.put(SIDE_KEY, PROVIDER_SIDE);
 
         ServiceConfig.appendRuntimeParameters(map);
+
+        // 通过反射将对象的字段信息添加到 map 中
         AbstractConfig.appendParameters(map, getMetrics());
         AbstractConfig.appendParameters(map, getApplication());
         AbstractConfig.appendParameters(map, getModule());
@@ -393,7 +399,9 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             map.putIfAbsent(METADATA_KEY, REMOTE_METADATA_STORAGE_TYPE);
         }
         // ljx 暴露方法
+        // methods 为 MethodConfig 集合，MethodConfig 中存储了 <dubbo:method> 标签的配置信息
         if (CollectionUtils.isNotEmpty(getMethods())) {
+            // 这段代码用于添加 Callback 配置到 map 中，代码太长，待会单独分析
             for (MethodConfig method : getMethods()) {
                 AbstractConfig.appendParameters(map, method, method.getName());
                 String retryKey = method.getName() + RETRY_SUFFIX;
@@ -455,6 +463,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             } // end of methods for
         }
 
+        // 检测 generic 是否为 "true"，并根据检测结果向 map 中添加不同的信息
         if (ProtocolUtils.isGeneric(generic)) {
             map.put(GENERIC_KEY, generic);
             map.put(METHODS_KEY, ANY_VALUE);
@@ -465,11 +474,15 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             }
 
             // ljx 构造一个服务stub，并获取所有方法名称
+            // 为接口生成包裹类 Wrapper，Wrapper 中包含了接口的详细信息，比如接口方法名数组，字段信息等
             String[] methods = Wrapper.getWrapper(interfaceClass).getMethodNames();
+
+            // 添加方法名到 map 中，如果包含多个方法名，则用逗号隔开，比如 method = init,destroy
             if (methods.length == 0) {
                 logger.warn("No method found in service interface " + interfaceClass.getName());
                 map.put(METHODS_KEY, ANY_VALUE);
             } else {
+                // 将逗号作为分隔符连接方法名，并将连接后的字符串放入 map 中
                 map.put(METHODS_KEY, StringUtils.join(new HashSet<String>(Arrays.asList(methods)), ","));
             }
         }
@@ -481,17 +494,21 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             token = provider.getToken();
         }
 
+        // 添加 token 到 map 中
         if (!ConfigUtils.isEmpty(token)) {
             if (ConfigUtils.isDefault(token)) {
+                // 随机生成 token
                 map.put(TOKEN_KEY, UUID.randomUUID().toString());
             } else {
                 map.put(TOKEN_KEY, token);
             }
         }
         //init serviceMetadata attachments
+        // 原来附加信息是在这里注入的
         serviceMetadata.getAttachments().putAll(map);
 
         // export service
+        // 获取 host 和 port
         String host = findConfigedHosts(protocolConfig, registryURLs, map);
         Integer port = findConfigedPorts(protocolConfig, name, map, protocolConfigNum);
         URL url = new URL(name, host, port, getContextPath(protocolConfig).map(p -> p + "/" + path).orElse(path), map);
@@ -515,6 +532,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             }
             // export to remote if the config is not local (export to local only when config is local)
             // ljx 远程调用
+            // 判断协议名是否为 injvm
             if (!SCOPE_LOCAL.equalsIgnoreCase(scope)) {
                 if (CollectionUtils.isNotEmpty(registryURLs)) {
                     for (URL registryURL : registryURLs) {
