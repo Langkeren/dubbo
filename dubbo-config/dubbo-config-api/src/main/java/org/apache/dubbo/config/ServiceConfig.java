@@ -356,7 +356,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         List<URL> registryURLs = ConfigValidationUtils.loadRegistries(this, true);
 
         int protocolConfigNum = protocols.size();
-        // 遍历 protocols，并在每个协议下导出服务
+        // 遍历 protocols，并在每个协议下导出服务(URL)
         for (ProtocolConfig protocolConfig : protocols) {
             String pathKey = URL.buildKey(getContextPath(protocolConfig)
                     .map(p -> p + "/" + path)
@@ -511,6 +511,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         // 获取 host 和 port
         String host = findConfigedHosts(protocolConfig, registryURLs, map);
         Integer port = findConfigedPorts(protocolConfig, name, map, protocolConfigNum);
+        // 构造URL
         URL url = new URL(name, host, port, getContextPath(protocolConfig).map(p -> p + "/" + path).orElse(path), map);
 
         // ljx 扩展点加载
