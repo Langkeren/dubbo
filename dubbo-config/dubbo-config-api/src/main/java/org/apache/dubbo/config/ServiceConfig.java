@@ -403,18 +403,25 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         if (CollectionUtils.isNotEmpty(getMethods())) {
             // 这段代码用于添加 Callback 配置到 map 中，代码太长，待会单独分析
             for (MethodConfig method : getMethods()) {
+                // 添加 MethodConfig 对象的字段信息到 map 中，键 = 方法名.属性名。
+                // 比如存储 <dubbo:method name="sayHello" retries="2"> 对应的 MethodConfig，
+                // 键 = sayHello.retries，map = {"sayHello.retries": 2, "xxx": "yyy"}
                 AbstractConfig.appendParameters(map, method, method.getName());
                 String retryKey = method.getName() + RETRY_SUFFIX;
                 if (map.containsKey(retryKey)) {
                     String retryValue = map.remove(retryKey);
+                    // 检测 MethodConfig retry 是否为 false，若是，则设置重试次数为0
                     if (FALSE_VALUE.equals(retryValue)) {
                         map.put(method.getName() + RETRIES_SUFFIX, ZERO_VALUE);
                     }
                 }
+
+                // 获取 ArgumentConfig 列表
                 List<ArgumentConfig> arguments = method.getArguments();
                 if (CollectionUtils.isNotEmpty(arguments)) {
                     for (ArgumentConfig argument : arguments) {
                         // convert argument type
+                        // 检测 type 属性是否为空，或者空串（分支1 ⭐️）
                         if (argument.getType() != null && argument.getType().length() > 0) {
                             Method[] methods = interfaceClass.getMethods();
                             // visit all methods
@@ -422,11 +429,17 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                                 for (int i = 0; i < methods.length; i++) {
                                     String methodName = methods[i].getName();
                                     // target the method, and get its signature
+                                    // 比对方法名，查找目标方法
                                     if (methodName.equals(method.getName())) {
                                         Class<?>[] argtypes = methods[i].getParameterTypes();
                                         // one callback in the method
                                         if (argument.getIndex() != -1) {
+                                            // 检测 ArgumentConfig 中的 type 属性与方法参数列表
+                                            // 中的参数名称是否一致，不一致则抛出异常(分支2 ⭐️)
                                             if (argtypes[argument.getIndex()].getName().equals(argument.getType())) {
+                                                // 添加 ArgumentConfig 字段信息到 map 中，
+                                                // 键前缀 = 方法名.index，比如:
+                                                // map = {"sayHello.3": true}
                                                 AbstractConfig
                                                         .appendParameters(map, argument, method.getName() + "." + argument.getIndex());
                                             } else {
@@ -435,9 +448,11 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                                                                 argument.getIndex() + ", type:" + argument.getType());
                                             }
                                         } else {
+                                            // 分支3 ⭐️
                                             // multiple callbacks in the method
                                             for (int j = 0; j < argtypes.length; j++) {
                                                 Class<?> argclazz = argtypes[j];
+                                                // 从参数类型列表中查找类型名称为 argument.type 的参数
                                                 if (argclazz.getName().equals(argument.getType())) {
                                                     AbstractConfig.appendParameters(map, argument, method.getName() + "." + j);
                                                     if (argument.getIndex() != -1 && argument.getIndex() != j) {
@@ -451,7 +466,9 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                                     }
                                 }
                             }
+                            // 用户未配置 type 属性，但配置了 index 属性，且 index != -1
                         } else if (argument.getIndex() != -1) {
+                            // 添加 ArgumentConfig 字段信息到 map 中
                             AbstractConfig.appendParameters(map, argument, method.getName() + "." + argument.getIndex());
                         } else {
                             throw new IllegalArgumentException(
