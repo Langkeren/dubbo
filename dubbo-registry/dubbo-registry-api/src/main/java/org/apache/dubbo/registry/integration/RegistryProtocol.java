@@ -217,6 +217,7 @@ public class RegistryProtocol implements Protocol {
 
         providerUrl = overrideUrlWithConfig(providerUrl, overrideSubscribeListener);
         // export invoker
+        // ------------------------------------------- 1. 导出服务 -----------------------------
         // 调用 doLocalExport 导出服务
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker, providerUrl);
 
@@ -232,6 +233,7 @@ public class RegistryProtocol implements Protocol {
         // decide if we need to delay publish
         boolean register = providerUrl.getParameter(REGISTER_KEY, true);
         if (register) {
+            // ------------------------------------------- 2. 注册服务 -----------------------------
             // 向注册中心注册服务
             registry.register(registeredProviderUrl);
         }
@@ -377,6 +379,7 @@ public class RegistryProtocol implements Protocol {
      */
     protected Registry getRegistry(final Invoker<?> originInvoker) {
         URL registryUrl = getRegistryUrl(originInvoker);
+        // 获取 Registry
         return getRegistry(registryUrl);
     }
 
