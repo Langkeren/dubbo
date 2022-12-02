@@ -63,6 +63,13 @@ public class ReferenceBean<T> extends ReferenceConfig<T> implements FactoryBean,
         SpringExtensionFactory.addApplicationContext(applicationContext);
     }
 
+    /**
+     * 服务引用的入口方法
+     *
+     * Dubbo 服务引用的时机有两个：
+     * 第一个是在 Spring 容器调用 ReferenceBean 的 afterPropertiesSet 方法时引用服务，
+     * 第二个是在 ReferenceBean 对应的服务被注入到其他类中时引用
+     */
     @Override
     public Object getObject() {
         return get();

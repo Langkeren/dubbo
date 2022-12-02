@@ -199,7 +199,6 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
     }
 
     /**
-     * ljx 加了两重锁？
      * @return 代理实现类
      */
     public synchronized T get() {

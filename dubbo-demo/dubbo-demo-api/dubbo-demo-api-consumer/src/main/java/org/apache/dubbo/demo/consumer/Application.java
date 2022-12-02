@@ -59,6 +59,9 @@ public class Application {
         System.out.println(genericInvokeResult);
     }
 
+    /**
+     * 通过ReferenceConfig调用服务
+     */
     private static void runWithRefer() {
         ReferenceConfig<DemoService> reference = new ReferenceConfig<>();
         reference.setApplication(new ApplicationConfig("dubbo-demo-api-consumer"));
