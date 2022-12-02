@@ -232,7 +232,9 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         dispatch(new ReferenceConfigDestroyedEvent(this));
     }
 
+
     public synchronized void init() {
+        // 避免重复初始化
         if (initialized) {
             return;
         }
@@ -247,21 +249,31 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             bootstrap.initialize();
         }
 
+        /*
+          Dubbo 提供了丰富的配置，用于调整和优化框架行为，性能等。
+          Dubbo 在引用或导出服务时，首先会对这些配置进行检查和处理，以保证配置的正确性
+         */
         checkAndUpdateSubConfigs();
 
+        // 检测本地存根配置合法性
         checkStubAndLocal(interfaceClass);
         ConfigValidationUtils.checkMock(interfaceClass, this);
 
         Map<String, String> map = new HashMap<String, String>();
         map.put(SIDE_KEY, CONSUMER_SIDE);
 
+        // -------------------------------✨ 分割线3 ✨------------------------------
         ReferenceConfigBase.appendRuntimeParameters(map);
+
+        // 非泛化服务
         if (!ProtocolUtils.isGeneric(generic)) {
+            // 获取版本
             String revision = Version.getVersion(interfaceClass, version);
             if (revision != null && revision.length() > 0) {
                 map.put(REVISION_KEY, revision);
             }
 
+            // 获取接口方法列表，并添加到 map 中
             String[] methods = Wrapper.getWrapper(interfaceClass).getMethodNames();
             if (methods.length == 0) {
                 logger.warn("No method found in service interface " + interfaceClass.getName());
@@ -271,6 +283,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             }
         }
         map.put(INTERFACE_KEY, interfaceName);
+        // 将 ApplicationConfig、ConsumerConfig、ReferenceConfig 等对象的字段信息添加到 map 中
         AbstractConfig.appendParameters(map, getMetrics());
         AbstractConfig.appendParameters(map, getApplication());
         AbstractConfig.appendParameters(map, getModule());
@@ -282,12 +295,17 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         if (metadataReportConfig != null && metadataReportConfig.isValid()) {
             map.putIfAbsent(METADATA_KEY, REMOTE_METADATA_STORAGE_TYPE);
         }
+
+        // -------------------------------✨ 分割线4 ✨------------------------------
+
         Map<String, AsyncMethodInfo> attributes = null;
         if (CollectionUtils.isNotEmpty(getMethods())) {
             attributes = new HashMap<>();
+            // 遍历 MethodConfig 列表
             for (MethodConfig methodConfig : getMethods()) {
                 AbstractConfig.appendParameters(map, methodConfig, methodConfig.getName());
                 String retryKey = methodConfig.getName() + ".retry";
+                // 检测 map 是否包含 methodName.retry
                 if (map.containsKey(retryKey)) {
                     String retryValue = map.remove(retryKey);
                     if ("false".equals(retryValue)) {
@@ -302,6 +320,9 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             }
         }
 
+        // -------------------------------✨ 分割线5 ✨------------------------------
+
+        // 获取服务消费者 ip 地址
         String hostToRegistry = ConfigUtils.getSystemProperty(DUBBO_IP_TO_REGISTRY);
         if (StringUtils.isEmpty(hostToRegistry)) {
             hostToRegistry = NetUtils.getLocalHost();
@@ -313,10 +334,15 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
         serviceMetadata.getAttachments().putAll(map);
 
+
+        // 创建代理类
         ref = createProxy(map);
 
         serviceMetadata.setTarget(ref);
         serviceMetadata.addAttribute(PROXY_CLASS_REF, ref);
+
+        // 根据服务名，ReferenceConfig，代理类构建 ConsumerModel，
+        // 并将 ConsumerModel 存入到 ApplicationModel 中
         ConsumerModel consumerModel = repository.lookupReferredService(serviceMetadata.getServiceKey());
         consumerModel.setProxyObject(ref);
         consumerModel.init(attributes);
@@ -451,6 +477,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         }
         completeCompoundConfigs(consumer);
         // get consumer's global configuration
+        // 检测 consumer 变量是否为空，为空则创建
         checkDefault();
 
         // init some null configuration.
@@ -460,12 +487,16 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
         this.refresh();
         if (getGeneric() == null && getConsumer() != null) {
+            // 设置 generic
             setGeneric(getConsumer().getGeneric());
         }
+
+        // 检测是否为泛化接口
         if (ProtocolUtils.isGeneric(generic)) {
             interfaceClass = GenericService.class;
         } else {
             try {
+                // 加载类
                 interfaceClass = Class.forName(interfaceName, true, Thread.currentThread()
                         .getContextClassLoader());
             } catch (ClassNotFoundException e) {
@@ -474,11 +505,13 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             checkInterfaceAndMethods(interfaceClass, getMethods());
         }
 
+        // 设置服务元信息配置, 版本/group等
         initServiceMetadata(consumer);
         serviceMetadata.setServiceType(getActualInterface());
         // TODO, uncomment this line once service key is unified
         serviceMetadata.setServiceKey(URL.buildKey(interfaceName, group, version));
 
+        // 获取服务
         ServiceRepository repository = ApplicationModel.getServiceRepository();
         ServiceDescriptor serviceDescriptor = repository.registerService(interfaceClass);
         repository.registerConsumer(
@@ -487,8 +520,9 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                 this,
                 null,
                 serviceMetadata);
-
+        // -------------------------------✨ 分割线1 ✨------------------------------ 解析配置文件
         resolveFile();
+        // -------------------------------✨ 分割线2 ✨------------------------------ 配置检查
         ConfigValidationUtils.validateReferenceConfig(this);
         postProcessConfig();
     }
