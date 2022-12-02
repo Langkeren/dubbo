@@ -282,6 +282,11 @@ public final class ClassGenerator {
         return mPool;
     }
 
+    /**
+     * 这段代码通过 ClassGenerator 为刚刚生成的代码构建 Class 类，并通过反射创建对象。ClassGenerator 是 Dubbo 自己封装的，
+     * 该类的核心是 toClass() 的重载方法 toClass(ClassLoader, ProtectionDomain)，该方法通过 javassist 构建 Class
+     * @return 类对象
+     */
     public Class<?> toClass() {
         return toClass(ClassUtils.getClassLoader(ClassGenerator.class),
                 getClass().getProtectionDomain());
