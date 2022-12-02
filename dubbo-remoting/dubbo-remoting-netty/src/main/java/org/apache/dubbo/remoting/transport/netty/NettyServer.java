@@ -70,6 +70,7 @@ public class NettyServer extends AbstractServer implements RemotingServer {
         NettyHelper.setNettyLoggerFactory();
         ExecutorService boss = Executors.newCachedThreadPool(new NamedThreadFactory("NettyServerBoss", true));
         ExecutorService worker = Executors.newCachedThreadPool(new NamedThreadFactory("NettyServerWorker", true));
+        // 设置 PipelineFactory
         ChannelFactory channelFactory = new NioServerSocketChannelFactory(boss, worker, getUrl().getPositiveParameter(IO_THREADS_KEY, Constants.DEFAULT_IO_THREADS));
         bootstrap = new ServerBootstrap(channelFactory);
 
@@ -96,6 +97,7 @@ public class NettyServer extends AbstractServer implements RemotingServer {
             }
         });
         // bind
+        // 绑定到指定的 ip 和端口上
         channel = bootstrap.bind(getBindAddress());
     }
 

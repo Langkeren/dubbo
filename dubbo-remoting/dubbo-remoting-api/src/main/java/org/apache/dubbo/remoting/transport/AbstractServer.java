@@ -81,6 +81,9 @@ public abstract class AbstractServer extends AbstractEndpoint implements Remotin
         executor = executorRepository.createExecutorIfAbsent(url);
     }
 
+    /**
+     * dubbo 默认使用的 NettyServer 是基于 netty 3.x 版本实现的，比较老了。因此 Dubbo 另外提供了 netty 4.x 版本的 NettyServer，大家可在使用 Dubbo 的过程中按需进行配置。
+     */
     protected abstract void doOpen() throws Throwable;
 
     protected abstract void doClose() throws Throwable;

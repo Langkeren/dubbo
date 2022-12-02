@@ -80,7 +80,7 @@ public class NettyServer extends AbstractServer implements RemotingServer {
     }
 
     /**
-     * 创建socket服务, 打开socket，接收并处理请求
+     * 创建socket服务, 打开socket，接收并处理请求，主要是netty的东西
      * Init and start netty server
      *
      * @throws Throwable
@@ -88,13 +88,14 @@ public class NettyServer extends AbstractServer implements RemotingServer {
     @Override
     protected void doOpen() throws Throwable {
         bootstrap = new ServerBootstrap();
-
+        // 创建 boss 和 worker 线程池
         bossGroup = createBossGroup();
         workerGroup = createWorkerGroup();
 
         final NettyServerHandler nettyServerHandler = createNettyServerHandler();
         channels = nettyServerHandler.getChannels();
 
+        // 创建 ServerBootstrap
         initServerBootstrap(nettyServerHandler);
 
         // bind
