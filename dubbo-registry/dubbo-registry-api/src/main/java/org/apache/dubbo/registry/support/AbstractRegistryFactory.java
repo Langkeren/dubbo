@@ -156,6 +156,7 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
             if (registry == null) {
                 throw new IllegalStateException("Can not create registry " + url);
             }
+            // 写入缓存
             REGISTRIES.put(key, registry);
             return registry;
         } finally {
@@ -175,6 +176,9 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
         return url.toServiceStringWithoutResolving();
     }
 
+    /**
+     * 以ZookeeperRegistryFactory注册中心为例
+     */
     protected abstract Registry createRegistry(URL url);
 
 
