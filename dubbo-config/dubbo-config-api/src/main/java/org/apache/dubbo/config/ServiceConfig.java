@@ -38,6 +38,7 @@ import org.apache.dubbo.event.Event;
 import org.apache.dubbo.event.EventDispatcher;
 import org.apache.dubbo.metadata.ServiceNameMapping;
 import org.apache.dubbo.registry.client.metadata.MetadataUtils;
+import org.apache.dubbo.registry.integration.RegistryProtocol;
 import org.apache.dubbo.rpc.Exporter;
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.Protocol;
@@ -368,7 +369,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     }
 
     /**
-     * 组装 URL
+     * 组装 URL，根据不同的协议使用相应的PROTOCOL导出服务，如InjvmProtocol本地导出（仅仅生成InjvmExporter，RegistryProtocol注册中心导出（导出和注册）
      */
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs, int protocolConfigNum) {
         String name = protocolConfig.getName();
@@ -595,7 +596,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                         // DelegateProviderMetaDataInvoker 用于持有 Invoker 和 ServiceConfig
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
-                        // 导出服务，并生成 Exporter
+                        // 导出服务，并生成 Exporter, 根据不同的协议有不同的实现，这里是注册中心导出 RegistryProtocol.export
                         Exporter<?> exporter = PROTOCOL.export(wrapperInvoker);
                         exporters.add(exporter);
                     }
