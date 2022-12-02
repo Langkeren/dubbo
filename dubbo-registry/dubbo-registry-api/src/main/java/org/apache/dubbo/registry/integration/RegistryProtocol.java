@@ -234,7 +234,8 @@ public class RegistryProtocol implements Protocol {
         boolean register = providerUrl.getParameter(REGISTER_KEY, true);
         if (register) {
             // ------------------------------------------- 2. 注册服务 -----------------------------
-            // 向注册中心注册服务
+            // -----------------2.1 向注册中心注册服务 ---------------------
+            // 跳到AbstractRegistry->FailbackRegistry抽象类
             registry.register(registeredProviderUrl);
         }
 
