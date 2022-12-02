@@ -41,6 +41,8 @@ public abstract class AbstractZookeeperTransporter implements ZookeeperTransport
     private final Map<String, ZookeeperClient> zookeeperClientMap = new ConcurrentHashMap<>();
 
     /**
+     * 1. 先从缓存获取zookeeper客户端
+     * 2. 缓存未命中则创建新的客户端
      * share connect for registry, metadata, etc..
      * <p>
      * Make sure the connection is connected.
@@ -64,7 +66,6 @@ public abstract class AbstractZookeeperTransporter implements ZookeeperTransport
                 logger.info("find valid zookeeper client from the cache for address: " + url);
                 return zookeeperClient;
             }
-
             zookeeperClient = createZookeeperClient(url);
             logger.info("No valid zookeeper client found from cache, therefore create a new client for url. " + url);
             writeToClientMap(addressList, zookeeperClient);
@@ -73,6 +74,7 @@ public abstract class AbstractZookeeperTransporter implements ZookeeperTransport
     }
 
     /**
+     * 默认是3.x版本
      * @param url the url that will create zookeeper connection .
      *            The url in AbstractZookeeperTransporter#connect parameter is rewritten by this one.
      *            such as: zookeeper://127.0.0.1:2181/org.apache.dubbo.remoting.zookeeper.ZookeeperTransporter
