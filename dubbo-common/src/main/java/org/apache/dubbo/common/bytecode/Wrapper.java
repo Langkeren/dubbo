@@ -104,6 +104,8 @@ public abstract class Wrapper {
     /**
      * get wrapper.
      *
+     * 在创建 Wrapper 子类的过程中，子类代码生成逻辑会对 getWrapper 方法传入的 Class 对象进行解析，拿到诸如类方法，类成员变量等信息。
+     * 以及生成 invokeMethod 方法代码和其他一些方法代码。代码生成完毕后，通过 Javassist 生成 Class 对象，最后再通过反射创建 Wrapper 实例
      * @param c Class instance.
      * @return Wrapper instance(not null).
      */
