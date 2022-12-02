@@ -305,32 +305,53 @@ public abstract class Wrapper {
         for (Map.Entry<String, Method> entry : ms.entrySet()) {
             String md = entry.getKey();
             Method method = entry.getValue();
+            // 匹配以 get 开头的方法
             if ((matcher = ReflectUtils.GETTER_METHOD_DESC_PATTERN.matcher(md)).matches()) {
+                // 获取属性名
                 String pn = propertyName(matcher.group(1));
+                // 生成属性判断以及返回语句，示例如下：
+                // if( $2.equals("name") ) { return ($w).w.getName(); }
                 c2.append(" if( $2.equals(\"").append(pn).append("\") ){ return ($w)w.").append(method.getName()).append("(); }");
                 pts.put(pn, method.getReturnType());
+
+            // 匹配以 is/has/can 开头的方法
             } else if ((matcher = ReflectUtils.IS_HAS_CAN_METHOD_DESC_PATTERN.matcher(md)).matches()) {
                 String pn = propertyName(matcher.group(1));
+                // 生成属性判断以及返回语句，示例如下：
+                // if( $2.equals("dream") ) { return ($w).w.hasDream(); }
                 c2.append(" if( $2.equals(\"").append(pn).append("\") ){ return ($w)w.").append(method.getName()).append("(); }");
                 pts.put(pn, method.getReturnType());
+            // 匹配以 set 开头的方法
             } else if ((matcher = ReflectUtils.SETTER_METHOD_DESC_PATTERN.matcher(md)).matches()) {
                 Class<?> pt = method.getParameterTypes()[0];
                 String pn = propertyName(matcher.group(1));
+                // 生成属性判断以及 setter 调用语句，示例如下：
+                // if( $2.equals("name") ) { w.setName((java.lang.String)$3); return; }
                 c1.append(" if( $2.equals(\"").append(pn).append("\") ){ w.").append(method.getName()).append("(").append(arg(pt, "$3")).append("); return; }");
                 pts.put(pn, pt);
             }
         }
+
+        // 添加 NoSuchPropertyException 异常抛出代码
         c1.append(" throw new " + NoSuchPropertyException.class.getName() + "(\"Not found property \\\"\"+$2+\"\\\" field or setter method in class " + c.getName() + ".\"); }");
         c2.append(" throw new " + NoSuchPropertyException.class.getName() + "(\"Not found property \\\"\"+$2+\"\\\" field or getter method in class " + c.getName() + ".\"); }");
 
+
+
+        // --------------------------------✨ 分割线4 ✨-------------------------------------
         // make class
         // ljx 动态生成类
         long id = WRAPPER_CLASS_COUNTER.getAndIncrement();
+        // 创建类生成器
         ClassGenerator cc = ClassGenerator.newInstance(cl);
+        // 设置类名及超类
         cc.setClassName((Modifier.isPublic(c.getModifiers()) ? Wrapper.class.getName() : c.getName() + "$sw") + id);
         cc.setSuperClass(Wrapper.class);
 
+        // 添加默认构造方法
         cc.addDefaultConstructor();
+
+        // 添加字段
         cc.addField("public static String[] pns;"); // property name array.
         cc.addField("public static " + Map.class.getName() + " pts;"); // property type map.
         cc.addField("public static String[] mns;"); // all method name array.
@@ -339,6 +360,7 @@ public abstract class Wrapper {
             cc.addField("public static Class[] mts" + i + ";");
         }
 
+        // 添加方法代码
         cc.addMethod("public String[] getPropertyNames(){ return pns; }");
         cc.addMethod("public boolean hasProperty(String n){ return pts.containsKey($1); }");
         cc.addMethod("public Class getPropertyType(String n){ return (Class)pts.get($1); }");
