@@ -369,7 +369,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     }
 
     /**
-     * 组装 URL，根据不同的协议使用相应的PROTOCOL导出服务，如InjvmProtocol本地导出（仅仅生成InjvmExporter，RegistryProtocol注册中心导出（导出和注册）
+     * 组装 URL，根据不同的协议使用相应的PROTOCOL导出服务，如InjvmProtocol本地导出（仅仅生成InjvmExporter，RegistryProtocol 注册中心导出（导出和注册）
      */
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs, int protocolConfigNum) {
         String name = protocolConfig.getName();
