@@ -428,6 +428,7 @@ public class DubboProtocol extends AbstractProtocol {
         optimizeSerialization(url);
 
         // create rpc invoker.
+        // 创建 DubboInvoker
         DubboInvoker<T> invoker = new DubboInvoker<T>(serviceType, url, getClients(url), invokers);
         invokers.add(invoker);
 
@@ -436,8 +437,10 @@ public class DubboProtocol extends AbstractProtocol {
 
     private ExchangeClient[] getClients(URL url) {
         // whether to share connection
+        // 获取连接数，默认为0，表示未配置
         int connections = url.getParameter(CONNECTIONS_KEY, 0);
         // if not configured, connection is shared, otherwise, one connection for one service
+        // 如果未配置 connections，则共享连接
         if (connections == 0) {
             /*
              * The xml configuration should have a higher priority than properties.
@@ -449,6 +452,7 @@ public class DubboProtocol extends AbstractProtocol {
         } else {
             ExchangeClient[] clients = new ExchangeClient[connections];
             for (int i = 0; i < clients.length; i++) {
+                // 初始化新的客户端
                 clients[i] = initClient(url);
             }
             return clients;
@@ -468,6 +472,7 @@ public class DubboProtocol extends AbstractProtocol {
 
         Object clients = referenceClientMap.get(key);
         if (clients instanceof List) {
+            // 获取带有“引用计数”功能的 ExchangeClient
             List<ReferenceCountExchangeClient> typedClients = (List<ReferenceCountExchangeClient>) clients;
             if (checkClientCanUse(typedClients)) {
                 batchClientRefIncr(typedClients);

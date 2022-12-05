@@ -425,6 +425,8 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
             // 单个注册中心或服务提供者(服务直连，下同)
             if (urls.size() == 1) {
+                // Invoker 是 Dubbo 的核心模型，代表一个可执行体。在服务提供方，Invoker 用于调用服务提供类。在服务消费方，Invoker 用于执行远程调用。
+                // Invoker 是由 Protocol 实现类构建而来
                 // 调用 RegistryProtocol 的 refer 构建 Invoker 实例
                 invoker = REF_PROTOCOL.refer(interfaceClass, urls.get(0));
             // 多个注册中心或多个服务提供者，或者两者混合
