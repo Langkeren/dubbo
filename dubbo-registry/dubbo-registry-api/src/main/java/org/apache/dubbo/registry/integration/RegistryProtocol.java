@@ -481,26 +481,37 @@ public class RegistryProtocol implements Protocol {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
+        // 取 registry 参数值，并将其设置为协议头
         url = getRegistryUrl(url);
+        // 获取注册中心实例
         Registry registry = getRegistry(url);
         if (RegistryService.class.equals(type)) {
             return proxyFactory.getInvoker((T) registry, type, url);
         }
 
         // group="a,b" or group="*"
+        // 将 url 查询字符串转为 Map
         Map<String, String> qs = StringUtils.parseQueryString(url.getParameterAndDecoded(REFER_KEY));
+
+        // 获取 group 配置
         String group = qs.get(GROUP_KEY);
         if (group != null && group.length() > 0) {
             if ((COMMA_SPLIT_PATTERN.split(group)).length > 1 || "*".equals(group)) {
+                // 通过 SPI 加载 MergeableCluster 实例，并调用 doRefer 继续执行服务引用逻辑
                 return doRefer(Cluster.getCluster(MergeableCluster.NAME), registry, type, url, qs);
             }
         }
 
         Cluster cluster = Cluster.getCluster(qs.get(CLUSTER_KEY));
+        // 调用 doRefer 继续执行服务引用逻辑
         return doRefer(cluster, registry, type, url, qs);
     }
 
+    /**
+     * 和文档不太一致
+     */
     protected <T> Invoker<T> doRefer(Cluster cluster, Registry registry, Class<T> type, URL url, Map<String, String> parameters) {
+        // 生成服务消费者链接
         URL consumerUrl = new URL(CONSUMER_PROTOCOL, parameters.remove(REGISTER_IP_KEY), 0, type.getName(), parameters);
         ClusterInvoker<T> migrationInvoker = getMigrationInvoker(this, cluster, registry, type, url, consumerUrl);
         return interceptInvoker(migrationInvoker, url, consumerUrl);
@@ -508,6 +519,7 @@ public class RegistryProtocol implements Protocol {
 
     protected <T> ClusterInvoker<T> getMigrationInvoker(RegistryProtocol registryProtocol, Cluster cluster, Registry registry,
                                                         Class<T> type, URL url, URL consumerUrl) {
+        // 返回集群invoker
         return new ServiceDiscoveryMigrationInvoker<T>(registryProtocol, cluster, registry, type, url, consumerUrl);
     }
 
@@ -517,6 +529,7 @@ public class RegistryProtocol implements Protocol {
             return invoker;
         }
 
+        // 监听事件
         for (RegistryProtocolListener listener : listeners) {
             listener.onRefer(this, invoker, consumerUrl);
         }
