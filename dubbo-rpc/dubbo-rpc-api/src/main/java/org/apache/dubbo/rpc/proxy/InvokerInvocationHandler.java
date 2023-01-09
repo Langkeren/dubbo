@@ -33,7 +33,7 @@ import java.lang.reflect.Method;
 
 /**
  * InvokerHandler
- * DemoService成员变量 {@code org.apache.dubbo.rpc.cluster.support.wrapper.MockClusterInvoker}
+ * 成员变量invoker类型为 {@code org.apache.dubbo.rpc.cluster.support.wrapper.MockClusterInvoker}
  */
 public class InvokerInvocationHandler implements InvocationHandler {
     private static final Logger logger = LoggerFactory.getLogger(InvokerInvocationHandler.class);

@@ -27,6 +27,25 @@ import org.springframework.context.annotation.PropertySource;
 
 public class Application {
     /**
+     * 服务调用过程
+     * proxy0#sayHello(String)
+     *   —> InvokerInvocationHandler#invoke(Object, Method, Object[])
+     *     —> MockClusterInvoker#invoke(Invocation)
+     *       —> AbstractClusterInvoker#invoke(Invocation)
+     *         —> FailoverClusterInvoker#doInvoke(Invocation, List<Invoker<T>>, LoadBalance)
+     *           —> Filter#invoke(Invoker, Invocation)  // 包含多个 Filter 调用
+     *             —> ListenerInvokerWrapper#invoke(Invocation)
+     *               —> AbstractInvoker#invoke(Invocation)
+     *                 —> DubboInvoker#doInvoke(Invocation)
+     *                   —> ReferenceCountExchangeClient#request(Object, int)
+     *                     —> HeaderExchangeClient#request(Object, int)
+     *                       —> HeaderExchangeChannel#request(Object, int)
+     *                         —> AbstractPeer#send(Object)
+     *                           —> AbstractClient#send(Object, boolean)
+     *                             —> NettyChannel#send(Object, boolean)
+     *                               —> NioClientSocketChannel#write(Object)
+     *
+     *
      * In order to make sure multicast registry works, need to specify '-Djava.net.preferIPv4Stack=true' before
      * launch the application
      */
