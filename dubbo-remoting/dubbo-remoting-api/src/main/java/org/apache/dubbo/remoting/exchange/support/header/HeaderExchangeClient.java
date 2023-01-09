@@ -41,6 +41,8 @@ import static org.apache.dubbo.remoting.utils.UrlUtils.getHeartbeat;
 import static org.apache.dubbo.remoting.utils.UrlUtils.getIdleTimeout;
 
 /**
+ * 该类很多方法使用HeaderExchangeChannel 对象的同名方法
+ * HeaderExchangeClient的作用基本上是封装了一些关于心跳检测的逻辑
  * DefaultMessageClient
  */
 public class HeaderExchangeClient implements ExchangeClient {
@@ -48,6 +50,7 @@ public class HeaderExchangeClient implements ExchangeClient {
     private final Client client;
     private final ExchangeChannel channel;
 
+    // 以下代码均与心跳检测逻辑有关
     private static final HashedWheelTimer IDLE_CHECK_TIMER = new HashedWheelTimer(
             new NamedThreadFactory("dubbo-client-idleCheck", true), 1, TimeUnit.SECONDS, TICKS_PER_WHEEL);
     private HeartbeatTimerTask heartBeatTimerTask;
@@ -56,17 +59,20 @@ public class HeaderExchangeClient implements ExchangeClient {
     public HeaderExchangeClient(Client client, boolean startTimer) {
         Assert.notNull(client, "Client can't be null");
         this.client = client;
+        // 创建 HeaderExchangeChannel 对象
         this.channel = new HeaderExchangeChannel(client);
 
         if (startTimer) {
             URL url = client.getUrl();
             startReconnectTask(url);
+            // 开启心跳检测定时器
             startHeartBeatTask(url);
         }
     }
 
     @Override
     public CompletableFuture<Object> request(Object request) throws RemotingException {
+        // 直接 HeaderExchangeChannel 对象的同签名方法
         return channel.request(request);
     }
 
@@ -87,6 +93,7 @@ public class HeaderExchangeClient implements ExchangeClient {
 
     @Override
     public CompletableFuture<Object> request(Object request, ExecutorService executor) throws RemotingException {
+        // 直接 HeaderExchangeChannel 对象的同签名方法
         return channel.request(request, executor);
     }
 
@@ -208,6 +215,7 @@ public class HeaderExchangeClient implements ExchangeClient {
 
     private void doClose() {
         if (heartBeatTimerTask != null) {
+            // 停止心跳检测定时器
             heartBeatTimerTask.cancel();
         }
 
