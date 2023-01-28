@@ -49,8 +49,10 @@ import java.io.InputStream;
 public class ExchangeCodec extends TelnetCodec {
 
     // header length.
+    // 消息头长度
     protected static final int HEADER_LENGTH = 16;
     // magic header.
+    // 魔数内容
     protected static final short MAGIC = (short) 0xdabb;
     protected static final byte MAGIC_HIGH = Bytes.short2bytes(MAGIC)[0];
     protected static final byte MAGIC_LOW = Bytes.short2bytes(MAGIC)[1];
@@ -68,8 +70,10 @@ public class ExchangeCodec extends TelnetCodec {
     @Override
     public void encode(Channel channel, ChannelBuffer buffer, Object msg) throws IOException {
         if (msg instanceof Request) {
+            // 对 Request 对象进行编码
             encodeRequest(channel, buffer, (Request) msg);
         } else if (msg instanceof Response) {
+            // 对 Response 对象进行编码，后面分析
             encodeResponse(channel, buffer, (Response) msg);
         } else {
             super.encode(channel, buffer, msg);
@@ -226,25 +230,34 @@ public class ExchangeCodec extends TelnetCodec {
     protected void encodeRequest(Channel channel, ChannelBuffer buffer, Request req) throws IOException {
         Serialization serialization = getSerialization(channel, req);
         // header.
+        // 创建消息头字节数组，长度为 16
         byte[] header = new byte[HEADER_LENGTH];
         // set magic number.
+        // 设置魔数
         Bytes.short2bytes(MAGIC, header);
 
         // set request and serialization flag.
+        // 设置数据包类型（Request/Response）和序列化器编号
         header[2] = (byte) (FLAG_REQUEST | serialization.getContentTypeId());
 
+        // 设置通信方式(单向/双向)
         if (req.isTwoWay()) {
             header[2] |= FLAG_TWOWAY;
         }
+
+        // 设置事件标识
         if (req.isEvent()) {
             header[2] |= FLAG_EVENT;
         }
 
         // set request id.
+        // 设置请求编号，8个字节，从第4个字节开始设置
         Bytes.long2bytes(req.getId(), header, 4);
 
         // encode request data.
+        // 获取 buffer 当前的写位置
         int savedWriteIndex = buffer.writerIndex();
+        // 更新 writerIndex，为消息头预留 16 个字节的空间
         buffer.writerIndex(savedWriteIndex + HEADER_LENGTH);
         ChannelBufferOutputStream bos = new ChannelBufferOutputStream(buffer);
 
@@ -252,10 +265,13 @@ public class ExchangeCodec extends TelnetCodec {
             // heartbeat request data is always null
             bos.write(CodecSupport.getNullBytesOf(serialization));
         } else {
+            // 创建序列化器，比如 Hessian2ObjectOutput
             ObjectOutput out = serialization.serialize(channel.getUrl(), bos);
             if (req.isEvent()) {
+                // 对事件数据进行序列化操作
                 encodeEventData(channel, out, req.getData());
             } else {
+                // 对请求数据进行序列化操作
                 encodeRequestData(channel, out, req.getData(), req.getVersion());
             }
             out.flushBuffer();
@@ -266,13 +282,18 @@ public class ExchangeCodec extends TelnetCodec {
 
         bos.flush();
         bos.close();
+        // 获取写入的字节数，也就是消息体长度
         int len = bos.writtenBytes();
         checkPayload(channel, len);
+
+        // 将消息体长度写入到消息头中
         Bytes.int2bytes(len, header, 12);
 
         // write
+        // 将 buffer 指针移动到 savedWriteIndex，为写消息头做准备
         buffer.writerIndex(savedWriteIndex);
         buffer.writeBytes(header); // write header.
+        // 设置新的 writerIndex，writerIndex = 原写下标 + 消息头长度 + 消息体长度
         buffer.writerIndex(savedWriteIndex + HEADER_LENGTH + len);
     }
 
