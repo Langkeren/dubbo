@@ -89,6 +89,17 @@ import static org.apache.dubbo.rpc.protocol.dubbo.Constants.SHARE_CONNECTIONS_KE
 
 
 /**
+ *
+ * ChannelEventRunnable#run()
+ *   —> DecodeHandler#received(Channel, Object)
+ *     —> HeaderExchangeHandler#received(Channel, Object)
+ *       —> HeaderExchangeHandler#handleRequest(ExchangeChannel, Request)
+ *   =======> DubboProtocol.requestHandler#reply(ExchangeChannel, Object)
+ *           —> Filter#invoke(Invoker, Invocation)
+ *             —> AbstractProxyInvoker#invoke(Invocation)
+ *               —> Wrapper0#invokeMethod(Object, String, Class[], Object[])
+ *                 —> DemoServiceImpl#sayHello(String)
+ *
  * ljx 服务协议，dubbo实现
  * dubbo protocol support.
  */
@@ -114,6 +125,7 @@ public class DubboProtocol extends AbstractProtocol {
         @Override
         public CompletableFuture<Object> reply(ExchangeChannel channel, Object message) throws RemotingException {
 
+            // 非法请求抛出异常
             if (!(message instanceof Invocation)) {
                 throw new RemotingException(channel, "Unsupported request: "
                         + (message == null ? null : (message.getClass().getName() + ": " + message))
@@ -121,9 +133,11 @@ public class DubboProtocol extends AbstractProtocol {
             }
 
             Invocation inv = (Invocation) message;
+            // 获取 Invoker 实例
             Invoker<?> invoker = getInvoker(channel, inv);
             // need to consider backward-compatibility if it's a callback
             if (Boolean.TRUE.toString().equals(inv.getObjectAttachments().get(IS_CALLBACK_SERVICE_INVOKE))) {
+                // 回调相关，忽略
                 String methodsStr = invoker.getUrl().getParameters().get(METHODS_KEY);
                 boolean hasMethod = false;
                 if (methodsStr == null || !methodsStr.contains(COMMA_SEPARATOR)) {
@@ -146,6 +160,7 @@ public class DubboProtocol extends AbstractProtocol {
                 }
             }
             RpcContext.getContext().setRemoteAddress(channel.getRemoteAddress());
+            // 通过 Invoker 调用具体的服务
             Result result = invoker.invoke(inv);
             return result.thenApply(Function.identity());
         }
@@ -235,6 +250,7 @@ public class DubboProtocol extends AbstractProtocol {
     }
 
     Invoker<?> getInvoker(Channel channel, Invocation inv) throws RemotingException {
+        // 忽略回调和本地存根相关逻辑
         boolean isCallBackServiceInvoke = false;
         boolean isStubServiceInvoke = false;
         int port = channel.getLocalAddress().getPort();
@@ -254,12 +270,17 @@ public class DubboProtocol extends AbstractProtocol {
             inv.getObjectAttachments().put(IS_CALLBACK_SERVICE_INVOKE, Boolean.TRUE.toString());
         }
 
+        // 计算 service key，格式为 groupName/serviceName:serviceVersion:port。比如：
+        //   dubbo/com.alibaba.dubbo.demo.DemoService:1.0.0:20880
         String serviceKey = serviceKey(
                 port,
                 path,
                 (String) inv.getObjectAttachments().get(VERSION_KEY),
                 (String) inv.getObjectAttachments().get(GROUP_KEY)
         );
+
+        // 从 exporterMap 查找与 serviceKey 相对应的 DubboExporter 对象，
+        // 服务导出过程中会将 <serviceKey, DubboExporter> 映射关系存储到 exporterMap 集合中
         DubboExporter<?> exporter = (DubboExporter<?>) exporterMap.getExport(serviceKey);
 
         if (exporter == null) {
@@ -269,6 +290,7 @@ public class DubboProtocol extends AbstractProtocol {
                             ", message:" + getInvocationWithoutData(inv));
         }
 
+        // 获取 Invoker 对象，并返回
         return exporter.getInvoker();
     }
 

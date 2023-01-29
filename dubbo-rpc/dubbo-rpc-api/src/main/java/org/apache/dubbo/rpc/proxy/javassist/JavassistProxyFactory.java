@@ -45,12 +45,16 @@ public class JavassistProxyFactory extends AbstractProxyFactory {
         // 为目标类创建 Wrapper
         final Wrapper wrapper = Wrapper.getWrapper(proxy.getClass().getName().indexOf('$') < 0 ? proxy.getClass() : type);
         // 创建匿名 Invoker 类对象，并实现 doInvoke 方法。
+        // 创建匿名类对象
         return new AbstractProxyInvoker<T>(proxy, type, url) {
             @Override
             protected Object doInvoke(T proxy, String methodName,
                                       Class<?>[] parameterTypes,
                                       Object[] arguments) throws Throwable {
+                // Wrapper 是一个抽象类，其中 invokeMethod 是一个抽象方法
                 // 调用 Wrapper 的 invokeMethod 方法，invokeMethod 最终会调用目标方法
+                // Dubbo 会在运行时通过 Javassist 框架为 Wrapper 生成实现类，并实现 invokeMethod 方法，该方法最终会根据调用信息调用具体的服务。
+                // 官网文档后续以 DemoServiceImpl 为例讲解
                 return wrapper.invokeMethod(proxy, methodName, parameterTypes, arguments);
             }
         };

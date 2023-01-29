@@ -34,6 +34,18 @@ import java.util.concurrent.CompletionException;
 
 /**
  * This Invoker works on provider side, delegates RPC to interface implementation.
+ *
+ * ChannelEventRunnable#run()
+ *   —> DecodeHandler#received(Channel, Object)
+ *     —> HeaderExchangeHandler#received(Channel, Object)
+ *       —> HeaderExchangeHandler#handleRequest(ExchangeChannel, Request)
+ *         -> DubboProtocol.requestHandler#reply(ExchangeChannel, Object)
+ *           —> Filter#invoke(Invoker, Invocation)
+ *  ============> AbstractProxyInvoker#invoke(Invocation)
+ *               —> Wrapper0#invokeMethod(Object, String, Class[], Object[])
+ *                 —> DemoServiceImpl#sayHello(String)
+ *
+ *
  */
 public abstract class AbstractProxyInvoker<T> implements Invoker<T> {
     Logger logger = LoggerFactory.getLogger(AbstractProxyInvoker.class);
@@ -81,6 +93,7 @@ public abstract class AbstractProxyInvoker<T> implements Invoker<T> {
     @Override
     public Result invoke(Invocation invocation) throws RpcException {
         try {
+            // 调用 doInvoke 执行后续的调用，并将调用结果封装到 RpcResult 中，并
             Object value = doInvoke(proxy, invocation.getMethodName(), invocation.getParameterTypes(), invocation.getArguments());
             CompletableFuture<Object> future = wrapWithFuture(value);
             CompletableFuture<AppResponse> appResponseFuture = future.handle((obj, t) -> {
@@ -116,6 +129,9 @@ public abstract class AbstractProxyInvoker<T> implements Invoker<T> {
         return CompletableFuture.completedFuture(value);
     }
 
+    /**
+     * doInvoke 是一个抽象方法，这个需要由具体的 Invoker 实例实现。Invoker 实例是在运行时通过 JavassistProxyFactory 创建的
+     */
     protected abstract Object doInvoke(T proxy, String methodName, Class<?>[] parameterTypes, Object[] arguments) throws Throwable;
 
     @Override
