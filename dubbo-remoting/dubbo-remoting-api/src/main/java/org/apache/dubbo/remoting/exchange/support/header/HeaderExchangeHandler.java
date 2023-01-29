@@ -41,6 +41,9 @@ import static org.apache.dubbo.common.constants.CommonConstants.READONLY_EVENT;
 
 /**
  * ExchangeReceiver
+ *
+ * 对于双向通信，HeaderExchangeHandler 首先向后进行调用，得到调用结果。然后将调用结果封装到 Response 对象中，最后再将该对象返回给服务消费方。
+ * 如果请求不合法，或者调用失败，则将错误信息封装到 Response 对象中，并返回给服务消费方
  */
 public class HeaderExchangeHandler implements ChannelHandlerDelegate {
 
