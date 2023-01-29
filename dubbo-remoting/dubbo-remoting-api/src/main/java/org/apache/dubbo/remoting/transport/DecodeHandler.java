@@ -27,6 +27,16 @@ import org.apache.dubbo.remoting.exchange.Request;
 import org.apache.dubbo.remoting.exchange.Response;
 
 /**
+ * ChannelEventRunnable#run()
+ * ====> DecodeHandler#received(Channel, Object)
+ *     —> HeaderExchangeHandler#received(Channel, Object)
+ *       —> HeaderExchangeHandler#handleRequest(ExchangeChannel, Request)
+ *         —> DubboProtocol.requestHandler#reply(ExchangeChannel, Object)
+ *           —> Filter#invoke(Invoker, Invocation)
+ *             —> AbstractProxyInvoker#invoke(Invocation)
+ *               —> Wrapper0#invokeMethod(Object, String, Class[], Object[])
+ *                 —> DemoServiceImpl#sayHello(String)
+ *
  * DecodeHandler 主要是包含了一些解码逻辑。2.2.1 节分析请求解码时说过，请求解码可在 IO 线程上执行，也可在线程池中执行，这个取决于运行时配置。
  * DecodeHandler 存在的意义就是保证请求或响应对象可在线程池中被解码。解码完毕后，完全解码后的 Request 对象会继续向后传递，下一站是 HeaderExchangeHandler。
  */

@@ -42,6 +42,16 @@ import static org.apache.dubbo.common.constants.CommonConstants.READONLY_EVENT;
 /**
  * ExchangeReceiver
  *
+ * ChannelEventRunnable#run()
+ *   —> DecodeHandler#received(Channel, Object)
+ * ======> HeaderExchangeHandler#received(Channel, Object)
+ *       -> HeaderExchangeHandler#handleRequest(ExchangeChannel, Request)
+ *         —> DubboProtocol.requestHandler#reply(ExchangeChannel, Object)
+ *           —> Filter#invoke(Invoker, Invocation)
+ *             —> AbstractProxyInvoker#invoke(Invocation)
+ *               —> Wrapper0#invokeMethod(Object, String, Class[], Object[])
+ *                 —> DemoServiceImpl#sayHello(String)
+ *
  * 对于双向通信，HeaderExchangeHandler 首先向后进行调用，得到调用结果。然后将调用结果封装到 Response 对象中，最后再将该对象返回给服务消费方。
  * 如果请求不合法，或者调用失败，则将错误信息封装到 Response 对象中，并返回给服务消费方
  */
