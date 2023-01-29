@@ -36,6 +36,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * NettyHandler
+ *
+ * 调用链位置
+ *
+ * NettyHandler#messageReceived(ChannelHandlerContext, MessageEvent)
+ *   —> AbstractPeer#received(Channel, Object)
+ *     —> MultiMessageHandler#received(Channel, Object)
+ *       —> HeartbeatHandler#received(Channel, Object)
+ *         —> AllChannelHandler#received(Channel, Object)
+ *           —> ExecutorService#execute(Runnable)    // 由线程池执行后续的调用逻辑
  */
 @Sharable
 public class NettyHandler extends SimpleChannelHandler {
@@ -56,6 +65,7 @@ public class NettyHandler extends SimpleChannelHandler {
             throw new IllegalArgumentException("handler == null");
         }
         this.url = url;
+        // 这里的 handler 类型为 NettyServer
         this.handler = handler;
     }
 
@@ -97,8 +107,10 @@ public class NettyHandler extends SimpleChannelHandler {
 
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+        // 获取 NettyChannel
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.getChannel(), url, handler);
         try {
+            // 继续向下调用
             handler.received(channel, e.getMessage());
         } finally {
             NettyChannel.removeChannelIfDisconnected(ctx.getChannel());
