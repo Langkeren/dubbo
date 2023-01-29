@@ -29,6 +29,10 @@ import org.apache.dubbo.remoting.transport.dispatcher.WrappedChannelHandler;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 
+/**
+ * <a src="https://cn.dubbo.apache.org/zh/docsv2.7/dev/source/service-invoking-process/#2321-%E7%BA%BF%E7%A8%8B%E6%B4%BE%E5%8F%91%E6%A8%A1%E5%9E%8B">模型</a>
+ *  请求对象会被封装 ChannelEventRunnable 中，ChannelEventRunnable 将会是服务调用过程的新起点。所以接下来我们以 ChannelEventRunnable 为起点向下探索
+ */
 public class AllChannelHandler extends WrappedChannelHandler {
 
     public AllChannelHandler(ChannelHandler handler, URL url) {
