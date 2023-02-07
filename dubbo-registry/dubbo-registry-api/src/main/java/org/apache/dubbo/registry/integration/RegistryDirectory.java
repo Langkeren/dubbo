@@ -296,12 +296,14 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
             return newUrlInvokerMap;
         }
         Set<URL> keys = new HashSet<>();
+        // 获取服务消费端配置的协议
         String queryProtocols = this.queryMap.get(PROTOCOL_KEY);
         for (URL providerUrl : urls) {
             // If protocol is configured at the reference side, only the matching protocol is selected
             if (queryProtocols != null && queryProtocols.length() > 0) {
                 boolean accept = false;
                 String[] acceptProtocols = queryProtocols.split(",");
+                // 检测服务提供者协议是否被服务消费者所支持
                 for (String acceptProtocol : acceptProtocols) {
                     if (providerUrl.getProtocol().equals(acceptProtocol)) {
                         accept = true;
@@ -309,12 +311,16 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
                     }
                 }
                 if (!accept) {
+                    // 若服务提供者协议头不被消费者所支持，则忽略当前 providerUrl
                     continue;
                 }
             }
+            // 忽略 empty 协议
             if (EMPTY_PROTOCOL.equals(providerUrl.getProtocol())) {
                 continue;
             }
+
+            // 通过 SPI 检测服务端协议是否被消费端支持，不支持则抛出异常
             if (!ExtensionLoader.getExtensionLoader(Protocol.class).hasExtension(providerUrl.getProtocol())) {
                 logger.error(new IllegalStateException("Unsupported protocol " + providerUrl.getProtocol() +
                         " in notified url: " + providerUrl + " from registry " + getUrl().getAddress() +
@@ -322,33 +328,44 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
                         ExtensionLoader.getExtensionLoader(Protocol.class).getSupportedExtensions()));
                 continue;
             }
+
+            // 合并 url
             URL url = mergeUrl(providerUrl);
 
             if (keys.contains(url)) { // Repeated url
+                // 忽略重复 url
                 continue;
             }
             keys.add(url);
             // Cache key is url that does not merge with consumer side parameters, regardless of how the consumer combines parameters, if the server url changes, then refer again
+            // 获取与 url 对应的 Invoker
             Map<URL, Invoker<T>> localUrlInvokerMap = this.urlInvokerMap; // local reference
             Invoker<T> invoker = localUrlInvokerMap == null ? null : localUrlInvokerMap.get(url);
+            // 缓存未命中
             if (invoker == null) { // Not in the cache, refer again
                 try {
                     boolean enabled = true;
-                    if (url.hasParameter(DISABLED_KEY)) {
+                    if (url.hasParameter(DISABLED_KEY)) {                    // 获取 disable 配置，取反，然后赋值给 enable 变量
+                        // 获取 disable 配置，取反，然后赋值给 enable 变量
                         enabled = !url.getParameter(DISABLED_KEY, false);
                     } else {
+                        // 获取 enable 配置，并赋值给 enable 变量
                         enabled = url.getParameter(ENABLED_KEY, true);
                     }
                     if (enabled) {
+                        // 调用 refer 获取 Invoker
                         invoker = new InvokerDelegate<>(protocol.refer(serviceType, url), url, providerUrl);
                     }
                 } catch (Throwable t) {
                     logger.error("Failed to refer invoker for interface:" + serviceType + ",url:(" + url + ")" + t.getMessage(), t);
                 }
                 if (invoker != null) { // Put new invoker in cache
+                    // 缓存 Invoker 实例
                     newUrlInvokerMap.put(url, invoker);
                 }
+                // 缓存命中
             } else {
+                // 将 invoker 存储到 newUrlInvokerMap 中
                 newUrlInvokerMap.put(url, invoker);
             }
         }
