@@ -469,8 +469,10 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
         }
         // check deleted invoker
         if (oldUrlInvokerMap != null) {
+            // 遍历老的 <url, Invoker> 映射表
             for (URL key : oldUrlInvokerMap.keySet()) {
                 if (null != key && !newUrlInvokerMap.containsKey(key)) {
+                    // 检测 newInvokers 中是否包含老的 Invoker
                     Invoker<T> invoker = oldUrlInvokerMap.get(key);
                     if (invoker != null) {
                         try {
