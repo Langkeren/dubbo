@@ -70,6 +70,7 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
 
     static void handleResponse(Channel channel, Response response) throws RemotingException {
         if (response != null && !response.isHeartbeat()) {
+            // 继续向下调用
             DefaultFuture.received(channel, response);
         }
     }
