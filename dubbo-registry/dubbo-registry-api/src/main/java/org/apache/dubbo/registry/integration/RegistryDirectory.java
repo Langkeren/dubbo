@@ -71,6 +71,7 @@ import static org.apache.dubbo.rpc.cluster.Constants.ROUTER_KEY;
 
 
 /**
+ * RegistryDirectory 是一种动态服务目录，实现了 NotifyListener 接口。当注册中心服务配置发生变化后，RegistryDirectory 可收到与当前服务相关的变化
  * RegistryDirectory
  */
 public class RegistryDirectory<T> extends DynamicDirectory<T> {
@@ -107,6 +108,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> {
 
     @Override
     public synchronized void notify(List<URL> urls) {
+        // 定义三个集合，分别用于存放服务提供者 url，路由 url，配置器 url
         Map<String, List<URL>> categoryUrls = urls.stream()
                 .filter(Objects::nonNull)
                 .filter(this::isValidCategory)
