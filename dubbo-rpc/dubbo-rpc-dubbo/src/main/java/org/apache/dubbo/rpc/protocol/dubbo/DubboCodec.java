@@ -68,17 +68,25 @@ public class DubboCodec extends ExchangeCodec {
     protected Object decodeBody(Channel channel, InputStream is, byte[] header) throws IOException {
         byte flag = header[2], proto = (byte) (flag & SERIALIZATION_MASK);
         // get request id.
+        // 获取请求编号
         long id = Bytes.bytes2long(header, 4);
+        // 检测消息类型，若下面的条件成立，表明消息类型为 Response
         if ((flag & FLAG_REQUEST) == 0) {
             // decode response.
+            // 创建 Response 对象
             Response res = new Response(id);
+            // 检测事件标志位
             if ((flag & FLAG_EVENT) != 0) {
+                // 设置心跳事件
                 res.setEvent(true);
             }
             // get status.
+            // 获取响应状态
             byte status = header[3];
+            // 设置响应状态
             res.setStatus(status);
             try {
+                // 如果响应状态为 OK，表明调用过程正常
                 if (status == Response.OK) {
                     Object data;
                     if (res.isEvent()) {
@@ -92,19 +100,26 @@ public class DubboCodec extends ExchangeCodec {
                         }
                     } else {
                         DecodeableRpcResult result;
+                        // 根据 url 参数决定是否在 IO 线程上执行解码逻辑
                         if (channel.getUrl().getParameter(DECODE_IN_IO_THREAD_KEY, DEFAULT_DECODE_IN_IO_THREAD)) {
+                            // 创建 DecodeableRpcResult 对象
                             result = new DecodeableRpcResult(channel, res, is,
                                     (Invocation) getRequestData(id), proto);
+                            // 进行后续的解码工作
                             result.decode();
                         } else {
+                            // 创建 DecodeableRpcResult 对象
                             result = new DecodeableRpcResult(channel, res,
                                     new UnsafeByteArrayInputStream(readMessageData(is)),
                                     (Invocation) getRequestData(id), proto);
                         }
                         data = result;
                     }
+
+                    // 设置 DecodeableRpcResult 对象到 Response 对象中
                     res.setResult(data);
                 } else {
+                    // 解码过程中出现了错误，此时设置 CLIENT_ERROR 状态码到 Response 对象中
                     ObjectInput in = CodecSupport.deserialize(channel.getUrl(), is, proto);
                     res.setErrorMessage(in.readUTF());
                 }
@@ -117,6 +132,7 @@ public class DubboCodec extends ExchangeCodec {
             }
             return res;
         } else {
+            // 对请求数据进行解码，前面已分析过，此处忽略
             // decode request.
             Request req = new Request(id);
             req.setVersion(Version.getProtocolVersion());
