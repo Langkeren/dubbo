@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
+ * LeastActiveLoadBalance 是基于加权最小活跃数算法实现的
  * LeastActiveLoadBalance
  * <p>
  * Filter the number of invokers with the least number of active calls and count the weights and quantities of these invokers.
@@ -41,33 +42,42 @@ public class LeastActiveLoadBalance extends AbstractLoadBalance {
         // Number of invokers
         int length = invokers.size();
         // The least active value of all invokers
+        // 最小的活跃数
         int leastActive = -1;
         // The number of invokers having the same least active value (leastActive)
+        // 具有相同“最小活跃数”的服务者提供者（以下用 Invoker 代称）数量
         int leastCount = 0;
         // The index of invokers having the same least active value (leastActive)
+        // leastIndexs 用于记录具有相同“最小活跃数”的 Invoker 在 invokers 列表中的下标信息
         int[] leastIndexes = new int[length];
         // the weight of every invokers
         int[] weights = new int[length];
         // The sum of the warmup weights of all the least active invokers
         int totalWeight = 0;
         // The weight of the first least active invoker
+        // 第一个最小活跃数的 Invoker 权重值，用于与其他具有相同最小活跃数的 Invoker 的权重进行对比，
+        // 以检测是否“所有具有相同最小活跃数的 Invoker 的权重”均相等
         int firstWeight = 0;
         // Every least active invoker has the same weight value?
         boolean sameWeight = true;
 
 
+        // 遍历 invokers 列表
         // Filter out all the least active invokers
         for (int i = 0; i < length; i++) {
             Invoker<T> invoker = invokers.get(i);
             // Get the active number of the invoker
+            // 获取 Invoker 对应的活跃数
             int active = RpcStatus.getStatus(invoker.getUrl(), invocation.getMethodName()).getActive();
             // Get the weight of the invoker's configuration. The default value is 100.
             int afterWarmup = getWeight(invoker, invocation);
             // save for later use
             weights[i] = afterWarmup;
             // If it is the first invoker or the active number of the invoker is less than the current least active number
+            // 发现更小的活跃数，重新开始
             if (leastActive == -1 || active < leastActive) {
                 // Reset the active number of the current invoker to the least active number
+                // 使用当前活跃数 active 更新最小活跃数 leastActive
                 leastActive = active;
                 // Reset the number of least active invokers
                 leastCount = 1;
