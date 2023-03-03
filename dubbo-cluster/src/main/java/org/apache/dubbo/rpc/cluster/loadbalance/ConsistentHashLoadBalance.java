@@ -151,8 +151,12 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
         }
 
         public Invoker<T> select(Invocation invocation) {
+            // 将参数转为 key
             String key = toKey(invocation.getArguments());
+            // 对参数 key 进行 md5 运算
             byte[] digest = Bytes.getMD5(key);
+            // 取 digest 数组的前四个字节进行 hash 运算，再将 hash 值传给 selectForKey 方法，
+            // 寻找合适的 Invoker
             return selectForKey(hash(digest, 0));
         }
 
@@ -167,7 +171,10 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
         }
 
         private Invoker<T> selectForKey(long hash) {
+            // 到 TreeMap 中查找第一个节点值大于或等于当前 hash 的 Invoker
             Map.Entry<Long, Invoker<T>> entry = virtualInvokers.ceilingEntry(hash);
+            // 如果 hash 大于 Invoker 在圆环上最大的位置，此时 entry = null，
+            // 需要将 TreeMap 的头节点赋值给 entry
             if (entry == null) {
                 entry = virtualInvokers.firstEntry();
             }
@@ -209,7 +216,7 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
                 serverRequestCountMap.get(serverAddress).incrementAndGet();
             }
             totalRequestCount.incrementAndGet();
-
+            // 返回 Invoker
             return entry.getValue();
         }
 
