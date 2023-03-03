@@ -83,7 +83,7 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
     }
 
     private static final class ConsistentHashSelector<T> {
-
+        // 使用 TreeMap 存储 Invoker 虚拟节点
         private final TreeMap<Long, Invoker<T>> virtualInvokers;
 
         private final int replicaNumber;
@@ -119,7 +119,9 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
             this.virtualInvokers = new TreeMap<Long, Invoker<T>>();
             this.identityHashCode = identityHashCode;
             URL url = invokers.get(0).getUrl();
+            // 获取虚拟节点数，默认为160
             this.replicaNumber = url.getMethodParameter(methodName, HASH_NODES, 160);
+            // 获取参与 hash 计算的参数下标值，默认对第一个参数进行 hash 运算
             String[] index = COMMA_SPLIT_PATTERN.split(url.getMethodParameter(methodName, HASH_ARGUMENTS, "0"));
             argumentIndex = new int[index.length];
             for (int i = 0; i < index.length; i++) {
@@ -128,9 +130,16 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
             for (Invoker<T> invoker : invokers) {
                 String address = invoker.getUrl().getAddress();
                 for (int i = 0; i < replicaNumber / 4; i++) {
+                    // 对 address + i 进行 md5 运算，得到一个长度为16的字节数组
                     byte[] digest = Bytes.getMD5(address + i);
+                    // 对 digest 部分字节进行4次 hash 运算，得到四个不同的 long 型正整数
                     for (int h = 0; h < 4; h++) {
+                        // h = 0 时，取 digest 中下标为 0 ~ 3 的4个字节进行位运算
+                        // h = 1 时，取 digest 中下标为 4 ~ 7 的4个字节进行位运算
+                        // h = 2, h = 3 时过程同上
                         long m = hash(digest, h);
+                        // 将 hash 到 invoker 的映射关系存储到 virtualInvokers 中，
+                        // virtualInvokers 需要提供高效的查询操作，因此选用 TreeMap 作为存储结构
                         virtualInvokers.put(m, invoker);
                     }
                 }
